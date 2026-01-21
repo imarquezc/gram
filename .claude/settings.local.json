@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//var/folders/5x/r40g9yls6v732txllxzxv1340000gn/T/TemporaryItems/NSIRD_screencaptureui_LpTT3c/**)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git init:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
