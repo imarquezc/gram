@@ -123,7 +123,7 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
         {/* Stats + Legend */}
         <div className="mt-2 pt-2 border-t border-gray-100 flex-shrink-0">
           {/* Stats Row */}
-          <div className="flex items-center gap-4 mb-2">
+          <div className="flex items-center gap-2 mb-2">
             <StatPill label="Work" value={work} />
             <StatPill label="Allocated" value={allocated} variant="success" />
             <StatPill label="Pending" value={unallocated} variant={unallocated > 0 ? 'warning' : 'neutral'} />
@@ -168,18 +168,16 @@ interface StatPillProps {
 }
 
 function StatPill({ label, value, variant = 'neutral' }: StatPillProps) {
-  const colors = {
-    neutral: 'text-gray-600',
-    success: 'text-[#5E8B5A]',
-    warning: 'text-[#C96B6B]',
+  const styles = {
+    neutral: 'bg-gray-100 text-gray-700',
+    success: 'bg-emerald-50 text-emerald-700',
+    warning: 'bg-amber-50 text-amber-700',
   };
 
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-[11px] text-gray-400">{label}</span>
-      <span className={`text-sm font-semibold tabular-nums ${colors[variant]}`}>
-        {value}
-      </span>
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${styles[variant]}`}>
+      <span className="text-[11px] font-medium opacity-70">{label}</span>
+      <span className="text-sm font-bold tabular-nums">{value}</span>
     </div>
   );
 }
