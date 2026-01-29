@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { CapacityGrid } from './components/CapacityGrid';
 import { ProjectsPanel } from './components/ProjectsPanel';
-import { useStore } from './store/useStore';
+import { useStore, getColorHex } from './store/useStore';
 import type { SubProject } from './types';
 
 // Persist layout preferences
@@ -61,7 +61,7 @@ function App() {
       setActiveSubProject({
         projectId: data.projectId,
         subProject: data.subProject,
-        color: project?.color ?? '#3b82f6',
+        color: getColorHex(project?.color ?? 'c1'),
       });
     }
   };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useStore, COLORS } from '../store/useStore';
+import { useStore, COLOR_KEYS, getColorHex } from '../store/useStore';
 import { SubProjectChip } from './SubProjectChip';
 import type { Project } from '../types';
 
@@ -54,7 +54,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
             <button
               onClick={() => setShowColorPicker(!showColorPicker)}
               className="w-4 h-4 rounded-full shadow-sm ring-1 ring-black/10 hover:scale-110 transition-transform"
-              style={{ backgroundColor: project.color }}
+              style={{ backgroundColor: getColorHex(project.color) }}
             />
             <AnimatePresence>
               {showColorPicker && (
@@ -63,17 +63,17 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: -4 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-6 left-0 z-[100] bg-white rounded-xl shadow-apple-xl border border-gray-200/80 p-2.5 grid grid-cols-5 gap-1.5 w-[140px]"
+                  className="absolute top-6 left-0 z-[100] bg-white rounded-xl shadow-apple-xl border border-gray-200/80 p-3 grid grid-cols-5 gap-2.5 min-w-max"
                 >
-                  {COLORS.map((color) => (
+                  {COLOR_KEYS.map((colorKey) => (
                     <button
-                      key={color}
+                      key={colorKey}
                       onClick={() => {
-                        updateProjectColor(project.id, color);
+                        updateProjectColor(project.id, colorKey);
                         setShowColorPicker(false);
                       }}
-                      className="w-5 h-5 rounded-full hover:scale-110 transition-transform ring-1 ring-black/10"
-                      style={{ backgroundColor: color }}
+                      className="w-6 h-6 rounded-full hover:scale-110 transition-transform ring-1 ring-black/5"
+                      style={{ backgroundColor: getColorHex(colorKey) }}
                     />
                   ))}
                 </motion.div>
@@ -85,7 +85,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
             type="text"
             value={project.name}
             onChange={(e) => updateProjectName(project.id, e.target.value)}
-            className="font-semibold text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-1 focus:ring-violet-500/30 rounded px-1 -mx-1"
+            className="font-semibold text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-1 focus:ring-[#A8DF8E]/40 rounded px-1 -mx-1"
           />
 
           <span className="text-xs text-gray-400 tabular-nums">
@@ -121,7 +121,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
                 key={sp.id}
                 projectId={project.id}
                 subProject={sp}
-                color={project.color}
+                color={getColorHex(project.color)}
                 onRemove={() => removeSubProject(project.id, sp.id)}
                 onUpdateSize={(size) => updateSubProject(project.id, sp.id, { size })}
                 onUpdateName={(name) => updateSubProject(project.id, sp.id, { name })}
@@ -140,7 +140,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
               onChange={(e) => setNewSubProjectName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddSubProject()}
               placeholder="New sub-project..."
-              className="flex-1 px-3 py-2 text-sm bg-gray-100/80 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:bg-white transition-all placeholder:text-gray-400"
+              className="flex-1 px-3 py-2 text-sm bg-gray-100/80 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A8DF8E]/60 focus:bg-white transition-all placeholder:text-gray-400"
             />
             <div className="flex items-center gap-1 bg-gray-100/80 rounded-lg px-2 py-1">
               <button
@@ -178,7 +178,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2 }}
-      className="bg-white/80 rounded-xl border border-gray-200/60 overflow-hidden"
+      className="bg-white/80 rounded-xl border border-gray-200/60 overflow-visible"
     >
       {/* Header */}
       <div
@@ -202,7 +202,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
               setShowColorPicker(!showColorPicker);
             }}
             className="w-3.5 h-3.5 rounded-full shadow-sm ring-1 ring-black/10 hover:scale-110 transition-transform"
-            style={{ backgroundColor: project.color }}
+            style={{ backgroundColor: getColorHex(project.color) }}
           />
           <AnimatePresence>
             {showColorPicker && (
@@ -211,19 +211,19 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: -4 }}
                 transition={{ duration: 0.15 }}
-                className="absolute top-6 left-0 z-[100] bg-white rounded-xl shadow-apple-xl border border-gray-200/80 p-2.5 grid grid-cols-5 gap-1.5 w-[140px]"
+                className="absolute top-6 left-0 z-[100] bg-white rounded-xl shadow-apple-xl border border-gray-200/80 p-3 grid grid-cols-5 gap-2.5 min-w-max"
                 onClick={(e) => e.stopPropagation()}
               >
-                {COLORS.map((color) => (
+                {COLOR_KEYS.map((colorKey) => (
                   <button
-                    key={color}
+                    key={colorKey}
                     onClick={(e) => {
                       e.stopPropagation();
-                      updateProjectColor(project.id, color);
+                      updateProjectColor(project.id, colorKey);
                       setShowColorPicker(false);
                     }}
-                    className="w-5 h-5 rounded-full hover:scale-110 transition-transform ring-1 ring-black/10"
-                    style={{ backgroundColor: color }}
+                    className="w-6 h-6 rounded-full hover:scale-110 transition-transform ring-1 ring-black/5"
+                    style={{ backgroundColor: getColorHex(colorKey) }}
                   />
                 ))}
               </motion.div>
@@ -236,7 +236,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
           value={project.name}
           onChange={(e) => updateProjectName(project.id, e.target.value)}
           onClick={(e) => e.stopPropagation()}
-          className="flex-1 min-w-0 font-medium text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-1 focus:ring-violet-500/30 rounded px-1 -mx-1 truncate"
+          className="flex-1 min-w-0 font-medium text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-1 focus:ring-[#A8DF8E]/40 rounded px-1 -mx-1 truncate"
         />
 
         <span className="text-[11px] text-gray-400 tabular-nums flex-shrink-0">
@@ -276,7 +276,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
                     key={sp.id}
                     projectId={project.id}
                     subProject={sp}
-                    color={project.color}
+                    color={getColorHex(project.color)}
                     onRemove={() => removeSubProject(project.id, sp.id)}
                     onUpdateSize={(size) => updateSubProject(project.id, sp.id, { size })}
                     onUpdateName={(name) => updateSubProject(project.id, sp.id, { name })}
@@ -295,7 +295,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
                   onChange={(e) => setNewSubProjectName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddSubProject()}
                   placeholder="Add task..."
-                  className="flex-1 min-w-0 px-2.5 py-1.5 text-xs bg-gray-100/80 border-0 rounded-md focus:outline-none focus:ring-1 focus:ring-violet-500/50 focus:bg-white transition-all placeholder:text-gray-400"
+                  className="flex-1 min-w-0 px-2.5 py-1.5 text-xs bg-gray-100/80 border-0 rounded-md focus:outline-none focus:ring-1 focus:ring-[#A8DF8E]/60 focus:bg-white transition-all placeholder:text-gray-400"
                 />
                 <div className="flex items-center bg-gray-100/80 rounded-md">
                   <button

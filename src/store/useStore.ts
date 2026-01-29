@@ -3,31 +3,50 @@ import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import type { AppState, Project, SubProject, MonthCapacity } from '../types';
 
-// Apple-inspired color palette - softer, more harmonious
-export const COLORS = [
-  '#007AFF', // Apple Blue
-  '#34C759', // Apple Green
-  '#FF9500', // Apple Orange
-  '#FF3B30', // Apple Red
-  '#AF52DE', // Apple Purple
-  '#FF2D55', // Apple Pink
-  '#5AC8FA', // Apple Light Blue
-  '#FFCC00', // Apple Yellow
-  '#FF6B6B', // Coral
-  '#5856D6', // Apple Indigo
-  '#00C7BE', // Apple Teal
-  '#BF5AF2', // Apple Violet
-  '#64D2FF', // Apple Cyan
-  '#30D158', // Apple Mint
-  '#FFD60A', // Apple Bright Yellow
-  '#AC8E68', // Tan
-  '#8E8E93', // Apple Gray
-  '#A2845E', // Brown
-  '#FF453A', // Apple Light Red
-  '#32ADE6', // Apple Sky
-];
+// Color palette with semantic keys - actual colors can change freely
+// Professional palette - muted, harmonious, no browns
+export const COLOR_PALETTE: Record<string, string> = {
+  // Row 1: Core
+  'c1': '#5E8B5A',   // Sage
+  'c2': '#7BAE7F',   // Fern
+  'c3': '#C96B6B',   // Dusty rose
+  'c4': '#D4956A',   // Apricot
+  'c5': '#6B8CAE',   // Steel blue
+  // Row 2: Cool accents
+  'c1-m': '#4A7A8C', // Teal
+  'c2-m': '#5B7A9E', // Slate blue
+  'c3-m': '#9B6B8C', // Mauve
+  'c4-m': '#7A8B6B', // Olive
+  'c5-m': '#6B6B9B', // Periwinkle
+  // Row 3: Soft tones
+  'c1-s': '#6B8B8B', // Slate teal
+  'c2-s': '#7B9B8B', // Sea foam
+  'c3-s': '#9B7B8B', // Dusty plum
+  'c4-s': '#7B8B9B', // Cool slate
+  'c5-s': '#8B7B9B', // Soft violet
+  // Row 4: Neutrals
+  'n1': '#2D3748',   // Charcoal
+  'n2': '#4A5568',   // Dark gray
+  'n3': '#606770',   // Medium gray
+  'n4': '#718096',   // Gray
+  'n5': '#A0AEC0',   // Light gray
+};
 
-const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
+// Ordered list of color keys for the picker (matches grid layout)
+export const COLOR_KEYS = Object.keys(COLOR_PALETTE);
+
+// Get hex value from color key (supports both keys and legacy hex values)
+export const getColorHex = (color: string): string => {
+  // If it's already a hex value, return it
+  if (color.startsWith('#')) return color;
+  // Otherwise look up the key
+  return COLOR_PALETTE[color] || COLOR_PALETTE['c1'];
+};
+
+const getRandomColorKey = () => {
+  const mainColors = ['c1', 'c2', 'c3', 'c4', 'c5'];
+  return mainColors[Math.floor(Math.random() * mainColors.length)];
+};
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -48,7 +67,7 @@ export const useStore = create<AppState>()(
         const newProject: Project = {
           id: uuidv4(),
           name,
-          color: getRandomColor(),
+          color: getRandomColorKey(),
           subProjects: [],
           isCollapsed: false,
         };
@@ -266,6 +285,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'gram-storage',
+      version: 1,
     }
   )
 );

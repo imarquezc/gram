@@ -34,12 +34,12 @@ export function ProjectsPanel({ maxHeight = 'calc(100vh - 100px)', horizontal = 
               onChange={(e) => setNewProjectName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddProject()}
               placeholder="New project name..."
-              className="px-3 py-2 text-sm bg-black/5 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:bg-white transition-all placeholder:text-gray-400 w-48"
+              className="px-3 py-2 text-sm bg-black/5 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A8DF8E]/60 focus:bg-white transition-all placeholder:text-gray-400 w-48"
             />
             <button
               onClick={handleAddProject}
               disabled={!newProjectName.trim()}
-              className="px-3 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 shadow-sm"
+              className="px-3 py-2 bg-[#7CB87C] text-white text-sm font-medium rounded-lg hover:bg-[#6aa86a] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 shadow-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -85,12 +85,12 @@ export function ProjectsPanel({ maxHeight = 'calc(100vh - 100px)', horizontal = 
             onChange={(e) => setNewProjectName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddProject()}
             placeholder="New project name..."
-            className="flex-1 px-3 py-2 text-sm bg-black/5 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:bg-white transition-all placeholder:text-gray-400"
+            className="flex-1 px-3 py-2 text-sm bg-black/5 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A8DF8E]/60 focus:bg-white transition-all placeholder:text-gray-400"
           />
           <button
             onClick={handleAddProject}
             disabled={!newProjectName.trim()}
-            className="px-3 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-2 bg-[#7CB87C] text-white text-sm font-medium rounded-lg hover:bg-[#6aa86a] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

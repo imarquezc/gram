@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import { useRef, useState, useLayoutEffect } from 'react';
 import type { Project, SubProject } from '../types';
+import { getColorHex } from '../store/useStore';
 
 interface PlacedBlockProps {
   project: Project;
@@ -50,7 +51,7 @@ export function PlacedBlock({ project, subProject, onRemove }: PlacedBlockProps)
     transform: CSS.Translate.toString(transform),
     left: `${leftPercent}%`,
     width: `${widthPercent}%`,
-    backgroundColor: project.color,
+    backgroundColor: getColorHex(project.color),
     opacity: isDragging ? 0.5 : 1,
   };
 
@@ -67,8 +68,8 @@ export function PlacedBlock({ project, subProject, onRemove }: PlacedBlockProps)
       style={style}
       title={fullText}
     >
-      {/* Gradient overlay for depth */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+      {/* Subtle top highlight */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
 
       <div
         ref={contentRef}

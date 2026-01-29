@@ -9,7 +9,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(180deg, #f5f5f7 0%, #e8e8ed 100%);
+  background: linear-gradient(135deg, #F0FFDF 0%, #FEFEFE 100%);
   min-height: 100vh;
 }
 
@@ -38,7 +38,7 @@ body {
 
 /* Glass effect utilities */
 .glass {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
@@ -50,7 +50,7 @@ body {
 }
 
 .glass-subtle {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(10px) saturate(150%);
   -webkit-backdrop-filter: blur(10px) saturate(150%);
 }

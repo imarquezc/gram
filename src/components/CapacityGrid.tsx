@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
-import { useStore, getMonthName } from '../store/useStore';
+import { useStore, getMonthName, getColorHex } from '../store/useStore';
 import { PlacedBlock } from './PlacedBlock';
 
 interface CapacityGridProps {
@@ -120,7 +120,7 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
                 <div key={project.id} className="flex items-center gap-1.5">
                   <div
                     className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: project.color }}
+                    style={{ backgroundColor: getColorHex(project.color) }}
                   />
                   <span className="text-[11px] font-medium text-gray-600">{project.name}</span>
                   <span className="text-[10px] text-gray-400 tabular-nums">
@@ -164,7 +164,7 @@ function GridCell({ month, row, monthCapacities }: GridCellProps) {
       ref={setNodeRef}
       className={`flex-1 min-w-[80px] border-r border-gray-100 last:border-r-0 transition-colors duration-150 ${
         isOver
-          ? 'bg-violet-100/80'
+          ? 'bg-[#A8DF8E]/30'
           : isOverCapacity
             ? 'bg-gradient-to-b from-red-50/50 to-red-50/30'
             : 'bg-white hover:bg-gray-50/50'
