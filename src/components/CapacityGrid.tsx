@@ -14,6 +14,14 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
   const getAllAssignedSubProjects = useStore((s) => s.getAllAssignedSubProjects);
   const unassignSubProject = useStore((s) => s.unassignSubProject);
   const projects = useStore((s) => s.projects);
+  const getTotalWork = useStore((s) => s.getTotalWork);
+  const getTotalAllocated = useStore((s) => s.getTotalAllocated);
+  const getTotalCapacity = useStore((s) => s.getTotalCapacity);
+
+  const work = getTotalWork();
+  const allocated = getTotalAllocated();
+  const capacity = getTotalCapacity();
+  const unallocated = work - allocated;
 
   const assignedItems = getAllAssignedSubProjects();
 
@@ -43,7 +51,7 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
         <div className="flex mb-2 flex-shrink-0">
           <div className="w-10 flex-shrink-0"></div>
           {months.map((month) => {
-            const capacity = monthCapacities.find((mc) => mc.month === month)?.capacity ?? 5;
+            const cap = monthCapacities.find((mc) => mc.month === month)?.capacity ?? 5;
             return (
               <div key={month} className="flex-1 min-w-[80px] text-center">
                 <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
@@ -51,16 +59,16 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
                 </h3>
                 <div className="flex items-center justify-center gap-0.5">
                   <button
-                    onClick={() => updateMonthCapacity(month, Math.max(1, capacity - 1))}
+                    onClick={() => updateMonthCapacity(month, Math.max(1, cap - 1))}
                     className="w-5 h-5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-black/5 flex items-center justify-center transition-all text-xs font-medium"
                   >
                     -
                   </button>
                   <span className="text-[10px] font-medium w-4 text-center text-gray-400 tabular-nums">
-                    {capacity}
+                    {cap}
                   </span>
                   <button
-                    onClick={() => updateMonthCapacity(month, capacity + 1)}
+                    onClick={() => updateMonthCapacity(month, cap + 1)}
                     className="w-5 h-5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-black/5 flex items-center justify-center transition-all text-xs font-medium"
                   >
                     +
@@ -112,9 +120,18 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
           ))}
         </div>
 
-        {/* Legend */}
-        {projects.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-gray-100 flex-shrink-0">
+        {/* Stats + Legend */}
+        <div className="mt-2 pt-2 border-t border-gray-100 flex-shrink-0">
+          {/* Stats Row */}
+          <div className="flex items-center gap-4 mb-2">
+            <StatPill label="Work" value={work} />
+            <StatPill label="Allocated" value={allocated} variant="success" />
+            <StatPill label="Pending" value={unallocated} variant={unallocated > 0 ? 'warning' : 'neutral'} />
+            <StatPill label="Capacity" value={capacity} />
+          </div>
+
+          {/* Legend */}
+          {projects.length > 0 && (
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               {projects.map((project) => (
                 <div key={project.id} className="flex items-center gap-1.5">
@@ -129,8 +146,8 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Resize Handle */}
@@ -140,6 +157,29 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
       >
         <div className="w-10 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
       </div>
+    </div>
+  );
+}
+
+interface StatPillProps {
+  label: string;
+  value: number;
+  variant?: 'neutral' | 'success' | 'warning';
+}
+
+function StatPill({ label, value, variant = 'neutral' }: StatPillProps) {
+  const colors = {
+    neutral: 'text-gray-600',
+    success: 'text-[#5E8B5A]',
+    warning: 'text-[#C96B6B]',
+  };
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-[11px] text-gray-400">{label}</span>
+      <span className={`text-sm font-semibold tabular-nums ${colors[variant]}`}>
+        {value}
+      </span>
     </div>
   );
 }

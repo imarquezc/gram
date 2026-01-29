@@ -22,8 +22,10 @@ export interface MonthCapacity {
 export interface AppState {
   projects: Project[];
   monthCapacities: MonthCapacity[];
+  activePalette: 'forest' | 'ocean' | 'sunset';
 
   // Actions
+  cyclePalette: () => void;
   addProject: (name: string) => void;
   removeProject: (projectId: string) => void;
   updateProjectName: (projectId: string, name: string) => void;

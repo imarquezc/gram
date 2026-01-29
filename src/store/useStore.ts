@@ -3,44 +3,57 @@ import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import type { AppState, Project, SubProject, MonthCapacity } from '../types';
 
-// Color palette with semantic keys - actual colors can change freely
-// Professional palette - muted, harmonious, no browns
-export const COLOR_PALETTE: Record<string, string> = {
-  // Row 1: Core
-  'c1': '#5E8B5A',   // Sage
-  'c2': '#7BAE7F',   // Fern
-  'c3': '#C96B6B',   // Dusty rose
-  'c4': '#D4956A',   // Apricot
-  'c5': '#6B8CAE',   // Steel blue
-  // Row 2: Cool accents
-  'c1-m': '#4A7A8C', // Teal
-  'c2-m': '#5B7A9E', // Slate blue
-  'c3-m': '#9B6B8C', // Mauve
-  'c4-m': '#7A8B6B', // Olive
-  'c5-m': '#6B6B9B', // Periwinkle
-  // Row 3: Soft tones
-  'c1-s': '#6B8B8B', // Slate teal
-  'c2-s': '#7B9B8B', // Sea foam
-  'c3-s': '#9B7B8B', // Dusty plum
-  'c4-s': '#7B8B9B', // Cool slate
-  'c5-s': '#8B7B9B', // Soft violet
-  // Row 4: Neutrals
-  'n1': '#2D3748',   // Charcoal
-  'n2': '#4A5568',   // Dark gray
-  'n3': '#606770',   // Medium gray
-  'n4': '#718096',   // Gray
-  'n5': '#A0AEC0',   // Light gray
+// Three color palettes with semantic keys
+export type PaletteName = 'forest' | 'ocean' | 'sunset';
+
+export const PALETTES: Record<PaletteName, { name: string; colors: Record<string, string> }> = {
+  forest: {
+    name: 'Forest',
+    colors: {
+      'c1': '#5E8B5A', 'c2': '#7BAE7F', 'c3': '#C96B6B', 'c4': '#D4956A', 'c5': '#6B8CAE',
+      'c1-m': '#4A7A8C', 'c2-m': '#5B7A9E', 'c3-m': '#9B6B8C', 'c4-m': '#7A8B6B', 'c5-m': '#6B6B9B',
+      'c1-s': '#6B8B8B', 'c2-s': '#7B9B8B', 'c3-s': '#9B7B8B', 'c4-s': '#7B8B9B', 'c5-s': '#8B7B9B',
+      'n1': '#2D3748', 'n2': '#4A5568', 'n3': '#606770', 'n4': '#718096', 'n5': '#A0AEC0',
+    },
+  },
+  ocean: {
+    name: 'Ocean',
+    colors: {
+      'c1': '#2E86AB', 'c2': '#5299D3', 'c3': '#7ECBA1', 'c4': '#45B7A0', 'c5': '#6C5B7B',
+      'c1-m': '#3E92A3', 'c2-m': '#5A9EC7', 'c3-m': '#68B8C4', 'c4-m': '#4AAFB8', 'c5-m': '#7B6B8B',
+      'c1-s': '#5A8A9A', 'c2-s': '#7AA3B5', 'c3-s': '#8ABBB8', 'c4-s': '#6AACAC', 'c5-s': '#8A8A9A',
+      'n1': '#1A3A4A', 'n2': '#2A4A5A', 'n3': '#4A6A7A', 'n4': '#6A8A9A', 'n5': '#9AACB8',
+    },
+  },
+  sunset: {
+    name: 'Sunset',
+    colors: {
+      'c1': '#E07A5F', 'c2': '#F2A65A', 'c3': '#D4A373', 'c4': '#BC6C6C', 'c5': '#8B5A5A',
+      'c1-m': '#C97A6B', 'c2-m': '#E0956A', 'c3-m': '#C9A07A', 'c4-m': '#A86B6B', 'c5-m': '#9A6B7B',
+      'c1-s': '#B08A7A', 'c2-s': '#C9A88A', 'c3-s': '#BDA08A', 'c4-s': '#9A7A7A', 'c5-s': '#8A7A8A',
+      'n1': '#3D2C2C', 'n2': '#5A4545', 'n3': '#7A6565', 'n4': '#9A8585', 'n5': '#B8A8A8',
+    },
+  },
 };
 
-// Ordered list of color keys for the picker (matches grid layout)
-export const COLOR_KEYS = Object.keys(COLOR_PALETTE);
+export const PALETTE_NAMES: PaletteName[] = ['forest', 'ocean', 'sunset'];
+
+// Ordered list of color keys for the picker
+export const COLOR_KEYS = Object.keys(PALETTES.forest.colors);
+
+// Active palette stored outside Zustand for sync access (also persisted in store)
+let activePalette: PaletteName = 'forest';
+
+export const setActivePalette = (name: PaletteName) => {
+  activePalette = name;
+};
+
+export const getActivePalette = () => activePalette;
 
 // Get hex value from color key (supports both keys and legacy hex values)
 export const getColorHex = (color: string): string => {
-  // If it's already a hex value, return it
   if (color.startsWith('#')) return color;
-  // Otherwise look up the key
-  return COLOR_PALETTE[color] || COLOR_PALETTE['c1'];
+  return PALETTES[activePalette].colors[color] || PALETTES[activePalette].colors['c1'];
 };
 
 const getRandomColorKey = () => {
@@ -62,6 +75,16 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       projects: [],
       monthCapacities: initialCapacities,
+      activePalette: 'forest' as PaletteName,
+
+      cyclePalette: () => {
+        const current = get().activePalette;
+        const currentIndex = PALETTE_NAMES.indexOf(current);
+        const nextIndex = (currentIndex + 1) % PALETTE_NAMES.length;
+        const next = PALETTE_NAMES[nextIndex];
+        setActivePalette(next);
+        set({ activePalette: next });
+      },
 
       addProject: (name: string) => {
         const newProject: Project = {
@@ -286,6 +309,11 @@ export const useStore = create<AppState>()(
     {
       name: 'gram-storage',
       version: 1,
+      onRehydrateStorage: () => (state) => {
+        if (state?.activePalette) {
+          setActivePalette(state.activePalette);
+        }
+      },
     }
   )
 );
