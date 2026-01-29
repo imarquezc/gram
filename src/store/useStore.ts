@@ -3,27 +3,28 @@ import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import type { AppState, Project, SubProject, MonthCapacity } from '../types';
 
+// Apple-inspired color palette - softer, more harmonious
 export const COLORS = [
-  '#3b82f6', // blue
-  '#10b981', // emerald
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#8b5cf6', // violet
-  '#ec4899', // pink
-  '#06b6d4', // cyan
-  '#84cc16', // lime
-  '#f97316', // orange
-  '#6366f1', // indigo
-  '#14b8a6', // teal
-  '#a855f7', // purple
-  '#f43f5e', // rose
-  '#22c55e', // green
-  '#eab308', // yellow
-  '#0ea5e9', // sky
-  '#d946ef', // fuchsia
-  '#64748b', // slate
-  '#78716c', // stone
-  '#facc15', // bright yellow
+  '#007AFF', // Apple Blue
+  '#34C759', // Apple Green
+  '#FF9500', // Apple Orange
+  '#FF3B30', // Apple Red
+  '#AF52DE', // Apple Purple
+  '#FF2D55', // Apple Pink
+  '#5AC8FA', // Apple Light Blue
+  '#FFCC00', // Apple Yellow
+  '#FF6B6B', // Coral
+  '#5856D6', // Apple Indigo
+  '#00C7BE', // Apple Teal
+  '#BF5AF2', // Apple Violet
+  '#64D2FF', // Apple Cyan
+  '#30D158', // Apple Mint
+  '#FFD60A', // Apple Bright Yellow
+  '#AC8E68', // Tan
+  '#8E8E93', // Apple Gray
+  '#A2845E', // Brown
+  '#FF453A', // Apple Light Red
+  '#32ADE6', // Apple Sky
 ];
 
 const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
