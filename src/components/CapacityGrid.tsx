@@ -34,6 +34,12 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
 
   const rows = Array.from({ length: numRows }, (_, i) => i);
 
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const daysInMonth = new Date(today.getFullYear(), currentMonth + 1, 0).getDate();
+  const monthFraction = (today.getDate() - 1) / daysInMonth;
+  const todayFraction = (currentMonth + monthFraction) / 12;
+
   return (
     <div className="glass rounded-2xl shadow-apple-lg border border-white/50 overflow-hidden flex flex-col" style={{ height }}>
       {/* Header */}
@@ -80,7 +86,19 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
         </div>
 
         {/* Grid - Stretches to fill available space */}
-        <div className="rounded-xl overflow-hidden border border-gray-200/80 bg-white flex-1 flex flex-col min-h-0">
+        <div className="rounded-xl overflow-hidden border border-gray-200/80 bg-white flex-1 flex flex-col min-h-0 relative">
+          {/* Today indicator */}
+          <div
+            className="absolute top-0 bottom-0 pointer-events-none z-20"
+            style={{ left: `calc(2.5rem + (100% - 2.5rem) * ${todayFraction})` }}
+          >
+            <div className="relative w-px h-full bg-rose-500/70 shadow-[0_0_4px_rgba(244,63,94,0.4)]">
+              <div className="absolute top-0 -translate-x-1/2 px-1.5 py-0.5 rounded-b-md bg-rose-500 text-white text-[9px] font-semibold tracking-wide uppercase whitespace-nowrap">
+                Today
+              </div>
+            </div>
+          </div>
+
           {rows.map((rowIndex) => (
             <div
               key={rowIndex}
