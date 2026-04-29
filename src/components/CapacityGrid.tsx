@@ -13,6 +13,7 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
   const updateMonthCapacity = useStore((s) => s.updateMonthCapacity);
   const getAllAssignedSubProjects = useStore((s) => s.getAllAssignedSubProjects);
   const unassignSubProject = useStore((s) => s.unassignSubProject);
+  const updateSubProject = useStore((s) => s.updateSubProject);
   const projects = useStore((s) => s.projects);
   const getTotalWork = useStore((s) => s.getTotalWork);
   const getTotalAllocated = useStore((s) => s.getTotalAllocated);
@@ -130,6 +131,11 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
                       subProject={item.subProject}
                       onRemove={() =>
                         unassignSubProject(item.project.id, item.subProject.id)
+                      }
+                      onToggleDone={() =>
+                        updateSubProject(item.project.id, item.subProject.id, {
+                          done: !item.subProject.done,
+                        })
                       }
                     />
                   ))}

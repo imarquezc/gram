@@ -10,6 +10,7 @@ interface SubProjectChipProps {
   onRemove: () => void;
   onUpdateSize: (size: number) => void;
   onUpdateName: (name: string) => void;
+  onToggleDone: () => void;
 }
 
 export function SubProjectChip({
@@ -19,6 +20,7 @@ export function SubProjectChip({
   onRemove,
   onUpdateSize,
   onUpdateName,
+  onToggleDone,
 }: SubProjectChipProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: subProject.id,
@@ -33,6 +35,7 @@ export function SubProjectChip({
   };
 
   const isAssigned = subProject.startMonth !== null;
+  const isDone = !!subProject.done;
 
   return (
     <motion.div
@@ -42,10 +45,25 @@ export function SubProjectChip({
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: isDragging ? 0.5 : 1 }}
       className={`inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-lg text-white text-xs font-medium cursor-grab active:cursor-grabbing transition-all ${
-        isAssigned ? 'opacity-35 saturate-50' : 'shadow-sm hover:shadow-md hover:-translate-y-0.5'
+        isDone ? 'opacity-50 saturate-50' : isAssigned ? 'opacity-35 saturate-50' : 'shadow-sm hover:shadow-md hover:-translate-y-0.5'
       }`}
       style={{ ...style, backgroundColor: color }}
     >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleDone();
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        title={isDone ? 'Mark as not done' : 'Mark as done'}
+        className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center transition-colors ${
+          isDone ? 'bg-white/90 text-gray-800' : 'bg-black/15 hover:bg-white/30 text-white/70 hover:text-white'
+        }`}
+      >
+        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
+        </svg>
+      </button>
       <input
         type="text"
         value={subProject.name}
@@ -53,7 +71,7 @@ export function SubProjectChip({
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         placeholder="Name..."
-        className="bg-transparent border-none outline-none min-w-[40px] max-w-[80px] text-white placeholder-white/50 text-xs"
+        className={`bg-transparent border-none outline-none min-w-[40px] max-w-[80px] text-white placeholder-white/50 text-xs ${isDone ? 'line-through' : ''}`}
       />
       <div className="flex items-center gap-0.5 bg-black/15 rounded-md px-1 py-0.5">
         <button

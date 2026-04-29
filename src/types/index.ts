@@ -4,6 +4,7 @@ export interface SubProject {
   size: number; // dev-months - this determines how many months it spans
   startMonth: number | null; // 0-11 for Jan-Dec, null if unassigned (starting month)
   row: number | null; // which row in the grid (0-indexed)
+  done?: boolean;
 }
 
 export interface Project {

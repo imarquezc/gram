@@ -125,6 +125,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
                 onRemove={() => removeSubProject(project.id, sp.id)}
                 onUpdateSize={(size) => updateSubProject(project.id, sp.id, { size })}
                 onUpdateName={(name) => updateSubProject(project.id, sp.id, { name })}
+                onToggleDone={() => updateSubProject(project.id, sp.id, { done: !sp.done })}
               />
             ))}
             {project.subProjects.length === 0 && (
