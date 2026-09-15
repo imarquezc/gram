@@ -2,12 +2,449 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gram - Capacity Planner</title>
+    <title>Gram – Capacity planning you can see</title>
+    <meta name="description" content="Size work in dev-months, drag it onto a 12-month timeline, and know at a glance what fits. Free, no sign-up, share with a link." />
+    <meta property="og:title" content="Gram – Capacity planning you can see" />
+    <meta property="og:description" content="Size work in dev-months, drag it onto a 12-month timeline, and know at a glance what fits. Free, no sign-up, share with a link." />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#1E1E20" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // Links created before the app moved to /app/ looked like /?p=<id>
+      if (new URLSearchParams(location.search).has('p')) location.replace('/app/' + location.search);
+    </script>
+    <style>
+      :root {
+        --ink: #1e1e20;
+        --ink-2: #4a5568;
+        --ink-3: #718096;
+        --line: rgba(0, 0, 0, 0.08);
+        --card: #ffffff;
+        --accent: #7cb87c;
+        --accent-2: #a8df8e;
+        --c1: #5e8b5a; --c2: #7bae7f; --c3: #c96b6b; --c4: #d4956a; --c5: #6b8cae;
+        --c1m: #4a7a8c; --c3m: #9b6b8c; --c4m: #7a8b6b;
+        --rose: #f43f5e;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background: linear-gradient(135deg, #f0ffdf 0%, #fefefe 100%) fixed;
+        line-height: 1.5;
+      }
+      a { color: inherit; text-decoration: none; }
+      .wrap { width: min(1100px, calc(100% - 40px)); margin: 0 auto; }
+
+      /* Nav */
+      .nav {
+        position: sticky; top: 0; z-index: 50;
+        background: rgba(30, 30, 32, 0.88);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
+      .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+      .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em; }
+      .logo {
+        width: 30px; height: 30px; border-radius: 10px;
+        background: linear-gradient(135deg, var(--accent-2), var(--accent));
+        box-shadow: 0 6px 16px rgba(168, 223, 142, 0.35);
+        display: grid; place-items: center;
+      }
+      .logo svg { width: 16px; height: 16px; }
+      .nav-links { display: flex; align-items: center; gap: 6px; }
+      .nav-links a {
+        padding: 7px 12px; border-radius: 10px; font-size: 13px; font-weight: 500;
+        color: rgba(255, 255, 255, 0.75); transition: background 0.15s, color 0.15s;
+      }
+      .nav-links a:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+      .nav-links .cta { background: #fff; color: var(--ink); margin-left: 6px; }
+      .nav-links .cta:hover { background: #f1f5f0; color: var(--ink); }
+      @media (max-width: 640px) { .nav-links a:not(.cta) { display: none; } }
+
+      /* Hero */
+      .hero { position: relative; padding: 88px 0 40px; text-align: center; overflow: hidden; }
+      .hero::before {
+        content: ''; position: absolute; inset: -200px 0 auto; height: 560px; z-index: -1;
+        background: radial-gradient(600px 320px at 50% 40%, rgba(168, 223, 142, 0.45), transparent 70%);
+      }
+      .eyebrow {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 6px 12px 6px 8px; border-radius: 999px;
+        background: rgba(255, 255, 255, 0.7); border: 1px solid var(--line);
+        font-size: 12px; font-weight: 600; color: var(--ink-2); letter-spacing: 0.01em;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(124, 184, 124, 0.25); }
+      h1 {
+        margin: 22px auto 16px; max-width: 14ch;
+        font-size: clamp(2.5rem, 6.5vw, 4.4rem); line-height: 1.02; letter-spacing: -0.035em; font-weight: 700;
+      }
+      h1 em { font-style: normal; background: linear-gradient(90deg, #4f8a4c, #7cb87c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      .lede { margin: 0 auto; max-width: 52ch; font-size: clamp(1.05rem, 1.6vw, 1.25rem); color: var(--ink-2); }
+      .actions { display: flex; justify-content: center; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+      .btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 13px 22px; border-radius: 14px; font-weight: 600; font-size: 15px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s;
+      }
+      .btn-primary { background: var(--ink); color: #fff; box-shadow: 0 10px 24px rgba(30, 30, 32, 0.22); }
+      .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(30, 30, 32, 0.28); }
+      .btn-primary svg { width: 16px; height: 16px; }
+      .btn-ghost { background: rgba(255, 255, 255, 0.7); border: 1px solid var(--line); color: var(--ink-2); }
+      .btn-ghost:hover { background: #fff; color: var(--ink); }
+      .fine { margin-top: 14px; font-size: 13px; color: var(--ink-3); }
+
+      /* App mock */
+      .mock-wrap { padding: 44px 0 20px; }
+      .mock {
+        background: var(--card); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.06), 0 16px 32px rgba(0, 0, 0, 0.1), 0 32px 64px rgba(0, 0, 0, 0.1);
+        animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      .mock-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 16px; background: rgba(30, 30, 32, 0.92); color: #fff;
+      }
+      .mock-bar .brand { font-size: 13px; }
+      .mock-bar .logo { width: 24px; height: 24px; border-radius: 8px; box-shadow: none; }
+      .mock-bar .logo svg { width: 12px; height: 12px; }
+      .pills { display: flex; gap: 6px; }
+      .pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); font-size: 11px; font-weight: 500; color: rgba(255, 255, 255, 0.8); }
+      .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: #6ee7b7; }
+      .pill .swatches { display: flex; }
+      .pill .swatches i { width: 9px; height: 9px; border-radius: 50%; margin-left: -3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3); }
+      .pill .swatches i:first-child { margin-left: 0; }
+      .mock-body { display: grid; grid-template-columns: 1fr 240px; }
+      @media (max-width: 900px) { .mock-body { grid-template-columns: 1fr; } .mock-panel { display: none; } }
+
+      .mock-timeline { padding: 18px 18px 14px; overflow-x: auto; }
+      .tl { min-width: 720px; }
+      .tl-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+      .tl-head h3 { margin: 0; font-size: 13px; font-weight: 600; }
+      .tl-head p { margin: 0; font-size: 11px; color: var(--ink-3); }
+      .months { display: grid; grid-template-columns: 36px repeat(12, 1fr); margin-bottom: 6px; }
+      .months div { text-align: center; font-size: 11px; font-weight: 600; color: var(--ink-2); }
+      .months div span { display: block; font-size: 10px; font-weight: 500; color: var(--ink-3); }
+      .grid {
+        position: relative; display: grid;
+        grid-template-columns: 36px repeat(12, 1fr); grid-auto-rows: 42px;
+        border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; overflow: hidden;
+        background-color: #fff;
+        background-image:
+          linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+        background-size: calc((100% - 36px) / 12) 42px;
+        background-position: 36px 0;
+      }
+      .rowlab { grid-column: 1; display: grid; place-items: center; font-size: 10px; font-weight: 500; color: var(--ink-3); background: rgba(249, 250, 251, 0.9); border-right: 1px solid rgba(0, 0, 0, 0.06); }
+      .rowlab.over { color: var(--rose); font-weight: 600; }
+      .over-bg { background: rgba(201, 107, 107, 0.12); }
+      .blk {
+        margin: 5px 3px; border-radius: 8px; padding: 4px 8px; color: #fff; overflow: hidden;
+        display: flex; flex-direction: column; justify-content: center; line-height: 1.15;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), inset 0 0 0 0.5px rgba(255, 255, 255, 0.18);
+        animation: pop 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: var(--d, 0s);
+      }
+      .blk b { font-size: 11px; font-weight: 600; white-space: nowrap; }
+      .blk small { font-size: 9.5px; opacity: 0.85; white-space: nowrap; }
+      .blk.done { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.18) 0 6px, transparent 6px 12px); opacity: 0.8; }
+      .blk.done b { text-decoration: line-through; }
+      .today { position: absolute; top: 0; bottom: 0; left: calc(36px + (100% - 36px) * 8.5 / 12); width: 1px; background: rgba(244, 63, 94, 0.7); box-shadow: 0 0 4px rgba(244, 63, 94, 0.4); z-index: 3; }
+      .today span { position: absolute; top: 0; left: 50%; transform: translateX(-50%); padding: 2px 6px; border-radius: 0 0 6px 6px; background: var(--rose); color: #fff; font-size: 8px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+      .stats { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+      .stat { display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 10px; border-radius: 999px; background: #f3f5f2; font-size: 11px; color: var(--ink-3); }
+      .stat b { font-size: 12px; color: var(--ink); }
+
+      .mock-panel { border-left: 1px solid rgba(0, 0, 0, 0.06); background: rgba(250, 251, 249, 0.9); padding: 18px 16px; }
+      .mock-panel h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; }
+      .fake-input { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 10px; background: #fff; border: 1px solid var(--line); font-size: 11px; color: var(--ink-3); margin-bottom: 12px; }
+      .fake-input span { padding: 3px 8px; border-radius: 6px; background: #eef2ec; color: var(--ink-3); font-weight: 600; font-size: 10px; }
+      .pcard { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+      .pcard header { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
+      .pcard header i { width: 10px; height: 10px; border-radius: 3px; }
+      .pcard header span { margin-left: auto; font-size: 10px; color: var(--ink-3); font-weight: 500; }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+      .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px 4px 6px; border-radius: 8px; background: #f7f8f6; border: 1px solid var(--line); font-size: 11px; font-weight: 500; }
+      .chip i { width: 4px; height: 12px; border-radius: 2px; }
+      .chip em { font-style: normal; font-size: 10px; color: var(--ink-3); }
+      .chip.drag { box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12); transform: rotate(-3deg) translateY(-2px); background: #fff; }
+
+      /* Sections */
+      section { padding: 72px 0; }
+      .sec-head { text-align: center; max-width: 60ch; margin: 0 auto 40px; }
+      .sec-head h2 { margin: 0 0 10px; font-size: clamp(1.7rem, 3.4vw, 2.4rem); letter-spacing: -0.03em; line-height: 1.1; }
+      .sec-head p { margin: 0; color: var(--ink-2); font-size: 1.05rem; }
+      .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      @media (max-width: 860px) { .features { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 560px) { .features { grid-template-columns: 1fr; } }
+      .feat {
+        background: rgba(255, 255, 255, 0.8); border: 1px solid var(--line); border-radius: 18px; padding: 22px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.04), 0 8px 16px rgba(0, 0, 0, 0.03);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .feat:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04), 0 8px 16px rgba(0, 0, 0, 0.06), 0 16px 32px rgba(0, 0, 0, 0.06); }
+      .feat .ico { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 14px; color: #fff; }
+      .feat .ico svg { width: 18px; height: 18px; }
+      .feat h3 { margin: 0 0 6px; font-size: 16px; letter-spacing: -0.01em; }
+      .feat p { margin: 0; font-size: 14px; color: var(--ink-2); }
+
+      .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; counter-reset: step; }
+      @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+      .step { position: relative; padding: 26px 22px 22px; border-radius: 18px; background: rgba(255, 255, 255, 0.6); border: 1px solid var(--line); }
+      .step::before {
+        counter-increment: step; content: counter(step);
+        display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; margin-bottom: 14px;
+        background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: #fff; font-weight: 700; font-size: 14px;
+        box-shadow: 0 6px 14px rgba(124, 184, 124, 0.35);
+      }
+      .step h3 { margin: 0 0 6px; font-size: 16px; }
+      .step p { margin: 0; font-size: 14px; color: var(--ink-2); }
+
+      .share {
+        display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: center;
+        background: var(--ink); color: #fff; border-radius: 24px; padding: 48px;
+        box-shadow: 0 24px 60px rgba(30, 30, 32, 0.28);
+      }
+      @media (max-width: 800px) { .share { grid-template-columns: minmax(0, 1fr); padding: 32px 24px; } }
+      .share h2 { margin: 0 0 12px; font-size: clamp(1.7rem, 3.4vw, 2.3rem); letter-spacing: -0.03em; line-height: 1.1; }
+      .share p { margin: 0 0 22px; color: rgba(255, 255, 255, 0.72); font-size: 1.02rem; }
+      .share .btn-primary { background: #fff; color: var(--ink); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3); }
+      .linkcard { min-width: 0; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; padding: 18px; }
+      .linkcard .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .linkcard .url { min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: #d9f5c9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .linkcard .row .pill { flex-shrink: 0; }
+      .linkcard ul { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; font-size: 13px; color: rgba(255, 255, 255, 0.78); }
+      .linkcard li { display: flex; gap: 8px; align-items: flex-start; }
+      .linkcard li::before { content: ''; flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%; margin-top: 2px; background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center / 10px no-repeat; }
+
+      .final { text-align: center; padding: 40px 0 90px; }
+      .final h2 { margin: 0 0 12px; font-size: clamp(1.9rem, 4vw, 2.8rem); letter-spacing: -0.03em; line-height: 1.05; }
+      .final p { margin: 0 auto 26px; max-width: 46ch; color: var(--ink-2); }
+
+      footer { border-top: 1px solid var(--line); padding: 24px 0; font-size: 13px; color: var(--ink-3); }
+      footer .wrap { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+      footer a:hover { color: var(--ink); }
+
+      @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+      @keyframes pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+      @media (prefers-reduced-motion: reduce) { .mock, .blk { animation: none; } html { scroll-behavior: auto; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <nav class="nav">
+      <div class="wrap">
+        <a class="brand" href="/">
+          <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></span>
+          Gram
+        </a>
+        <div class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#share">Sharing</a>
+          <a class="cta" href="/app/">Open Gram</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="wrap">
+        <span class="eyebrow"><span class="dot"></span> Free · No sign-up · Runs in your browser</span>
+        <h1>Capacity planning you can <em>actually see</em>.</h1>
+        <p class="lede">Size work in dev-months, drag it onto a 12-month timeline, and know at a glance what fits, what doesn't, and when.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="/app/">
+            Open Gram
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="#how">See how it works</a>
+        </div>
+        <p class="fine">Nothing to install. Your plan stays in your browser until you choose to share it.</p>
+      </div>
+    </header>
+
+    <div class="wrap mock-wrap" aria-hidden="true">
+      <div class="mock">
+        <div class="mock-bar">
+          <span class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></span> Gram</span>
+          <div class="pills">
+            <span class="pill"><span class="dot"></span> Saved</span>
+            <span class="pill">Copy link</span>
+            <span class="pill"><span class="swatches"><i style="background:#5e8b5a"></i><i style="background:#7bae7f"></i><i style="background:#c96b6b"></i></span> Forest</span>
+          </div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-timeline">
+            <div class="tl">
+              <div class="tl-head"><h3>Timeline</h3><p>Drag items from Projects to schedule them</p></div>
+              <div class="months">
+                <div></div>
+                <div>Jan<span>4</span></div><div>Feb<span>4</span></div><div>Mar<span>4</span></div><div>Apr<span>4</span></div>
+                <div>May<span>4</span></div><div>Jun<span>4</span></div><div>Jul<span>4</span></div><div>Aug<span>4</span></div>
+                <div>Sep<span>4</span></div><div>Oct<span>4</span></div><div>Nov<span>4</span></div><div>Dec<span>4</span></div>
+              </div>
+              <div class="grid">
+                <div class="rowlab" style="grid-row:1">1</div>
+                <div class="rowlab" style="grid-row:2">2</div>
+                <div class="rowlab" style="grid-row:3">3</div>
+                <div class="rowlab" style="grid-row:4">4</div>
+                <div class="rowlab over" style="grid-row:5">5</div>
+                <div class="over-bg" style="grid-row:5;grid-column:4/span 2"></div>
+
+                <div class="blk done" style="grid-row:1;grid-column:2/span 3;background:var(--c1);--d:.05s"><b>Payments v2</b><small>Billing · 3 dev-months</small></div>
+                <div class="blk" style="grid-row:1;grid-column:6/span 5;background:var(--c5);--d:.1s"><b>Mobile app</b><small>Product · 5 dev-months</small></div>
+                <div class="blk" style="grid-row:1;grid-column:11/span 2;background:var(--c2);--d:.15s"><b>Q4 polish</b><small>Product · 2</small></div>
+
+                <div class="blk done" style="grid-row:2;grid-column:3/span 3;background:var(--c2);--d:.2s"><b>Onboarding</b><small>Growth · 3 dev-months</small></div>
+                <div class="blk" style="grid-row:2;grid-column:7/span 3;background:var(--c4);--d:.25s"><b>Search</b><small>Product · 3 dev-months</small></div>
+                <div class="blk" style="grid-row:2;grid-column:10/span 4;background:var(--c3);--d:.3s"><b>Analytics</b><small>Data · 4 dev-months</small></div>
+
+                <div class="blk" style="grid-row:3;grid-column:2/span 6;background:var(--c1m);--d:.35s"><b>Infra migration</b><small>Platform · 6 dev-months</small></div>
+                <div class="blk" style="grid-row:3;grid-column:9/span 2;background:var(--c5);--d:.4s"><b>SSO</b><small>Platform · 2</small></div>
+
+                <div class="blk" style="grid-row:4;grid-column:4/span 3;background:var(--c3m);--d:.45s"><b>Design system</b><small>Product · 3 dev-months</small></div>
+                <div class="blk" style="grid-row:4;grid-column:8/span 4;background:var(--c2);--d:.5s"><b>API v3</b><small>Platform · 4 dev-months</small></div>
+
+                <div class="blk" style="grid-row:5;grid-column:4/span 2;background:var(--c4m);--d:.55s"><b>Data export</b><small>Data · 2</small></div>
+
+                <div class="today"><span>Today</span></div>
+              </div>
+              <div class="stats">
+                <span class="stat">Work <b>40</b></span>
+                <span class="stat">Allocated <b>37</b></span>
+                <span class="stat">Pending <b>3</b></span>
+                <span class="stat">Capacity <b>48</b></span>
+              </div>
+            </div>
+          </div>
+          <aside class="mock-panel">
+            <h3>Projects</h3>
+            <div class="fake-input">New project name… <span>Add</span></div>
+            <div class="pcard">
+              <header><i style="background:var(--c3)"></i> Billing <span>2 pending</span></header>
+              <div class="chips">
+                <span class="chip drag"><i style="background:var(--c3)"></i> Invoices <em>2</em></span>
+                <span class="chip"><i style="background:var(--c3)"></i> Dunning <em>1</em></span>
+              </div>
+            </div>
+            <div class="pcard">
+              <header><i style="background:var(--c1m)"></i> Platform <span>3 scheduled</span></header>
+            </div>
+            <div class="pcard">
+              <header><i style="background:var(--c5)"></i> Product <span>5 scheduled</span></header>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <section id="features">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2>Everything on one screen. Nothing to configure.</h2>
+          <p>Gram trades Gantt charts and spreadsheets for a grid you can read in three seconds.</p>
+        </div>
+        <div class="features">
+          <div class="feat">
+            <div class="ico" style="background:var(--c1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/><path d="M4 12h12" opacity=".5"/></svg></div>
+            <h3>Drag it where it fits</h3>
+            <p>Drop a task on any month. Gram finds a free row and draws the span instantly. Move it until the picture makes sense.</p>
+          </div>
+          <div class="feat">
+            <div class="ico" style="background:var(--c5)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M8 5v14"/></svg></div>
+            <h3>Size work in dev-months</h3>
+            <p>A task of size 3 spans three months of one person. No hours, no story points, no ceremony.</p>
+          </div>
+          <div class="feat">
+            <div class="ico" style="background:var(--c3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2.6 17a2 2 0 001.7 3h15.4a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
+            <h3>Capacity per month</h3>
+            <p>Set how many people each month has. Rows over capacity turn red before you commit to anything.</p>
+          </div>
+          <div class="feat">
+            <div class="ico" style="background:var(--c4)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.5-1.5"/></svg></div>
+            <h3>Share with a link</h3>
+            <p>One click gives you a link. Anyone who has it sees the same plan and edits it live. No accounts, no invites.</p>
+          </div>
+          <div class="feat">
+            <div class="ico" style="background:var(--c1m)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></div>
+            <h3>Local first</h3>
+            <p>Your plan lives in your browser until you share it. Loads instantly, works offline, and never asks you to log in.</p>
+          </div>
+          <div class="feat">
+            <div class="ico" style="background:var(--c3m)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18" fill="currentColor" opacity=".35"/></svg></div>
+            <h3>Made to be looked at</h3>
+            <p>Three palettes, side or bottom layout, a today marker and done states. A plan you'll actually want to open.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2>Three steps. Maybe two minutes.</h2>
+          <p>Gram is built for the planning conversation, not for the report after it.</p>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <h3>Add projects and tasks</h3>
+            <p>Create a project, add its tasks, and set each one's size in dev-months.</p>
+          </div>
+          <div class="step">
+            <h3>Drag them onto the timeline</h3>
+            <p>Place tasks on the 12-month grid. Adjust monthly capacity and watch what overflows.</p>
+          </div>
+          <div class="step">
+            <h3>Share the link</h3>
+            <p>Hit Share and send the link. Everyone sees the same plan and can move things around.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="share">
+      <div class="wrap">
+        <div class="share">
+          <div>
+            <h2>One link. No accounts.</h2>
+            <p>When you're ready, Share publishes your plan to a private link. Whoever has it can view and edit, and changes sync in seconds. Keep the link private and it stays private.</p>
+            <a class="btn btn-primary" href="/app/">Start planning</a>
+          </div>
+          <div class="linkcard">
+            <div class="row">
+              <span class="url">gram.nacx.cl/app/?p=k3Jv8QxT2mLp</span>
+              <span class="pill"><span class="dot"></span> Saved</span>
+            </div>
+            <ul>
+              <li>Autosaves every change, no button to press</li>
+              <li>Other tabs and people see updates within seconds</li>
+              <li>Your local plan is never overwritten by a shared one</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="final">
+      <div class="wrap">
+        <h2>See your year before you commit to it.</h2>
+        <p>Open Gram, add what's on your plate, and drag it into place. It takes less time than reading this page.</p>
+        <a class="btn btn-primary" href="/app/">Open Gram</a>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <span>Gram · Free capacity planning</span>
+        <span><a href="/app/">Open the app</a> · <a href="#features">Features</a> · <a href="#share">Sharing</a></span>
+      </div>
+    </footer>
   </body>
 </html>

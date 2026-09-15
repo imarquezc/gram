@@ -1,73 +1,48 @@
-# React + TypeScript + Vite
+# Gram
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Visual capacity planner: projects, sub-projects sized in dev-months, and a 12-month timeline to drag them onto.
 
-Currently, two official plugins are available:
+- `/` is the landing page (`index.html`, static, no framework)
+- `/app/` is the planner (`app/index.html` → React app in `src/`)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Development
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
+npm run dev        # Vite on http://localhost:5173 (proxies /api to :8787)
+npm run dev:api    # Cloudflare Worker + local D1 on http://localhost:8787 (needs `npm run build` once)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Run `npm run db:migrate:local` once to create the local D1 table.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Sharing
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+The app works fully offline with `localStorage`. Clicking **Share** publishes the current plan to a random id
+and puts it in the URL (`/app/?p=<id>`). Anyone with that link sees the same plan; edits autosave and other open tabs
+pick them up within ~10 seconds. The id is the only credential: keep links private.
+
+Opening `/app/` without `?p=` shows your local plan, which is never overwritten by a shared one.
+
+## Deploy (Cloudflare Workers, free tier)
+
+The Worker in `worker/` serves the built app and a small JSON API backed by D1.
+
+One-time setup:
+
+```sh
+npx wrangler login
+npx wrangler d1 create gram          # copy the printed database_id into wrangler.jsonc
+npm run db:migrate                   # creates the `plans` table in the remote database
 ```
+
+Every deploy:
+
+```sh
+npm run deploy                       # = npm run build && wrangler deploy
+```
+
+Then attach your domain: Cloudflare dashboard → Workers & Pages → gram → Settings → Domains & Routes →
+Add custom domain (`gram.nacx.cl`). The zone must be on Cloudflare DNS.
+
+If you would rather keep hosting the static build elsewhere, deploy only the Worker and build the app with
+`VITE_API_BASE=https://gram.<account>.workers.dev` so it talks to the API cross-origin (CORS is enabled).
