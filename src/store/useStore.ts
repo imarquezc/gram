@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import type { AppState, Project, SubProject, MonthCapacity } from '../types';
+import { isSharedMode } from './sharedMode';
 
 // Three color palettes with semantic keys
 export type PaletteName = 'forest' | 'ocean' | 'sunset';
@@ -69,6 +70,36 @@ const initialCapacities: MonthCapacity[] = Array.from({ length: 12 }, (_, i) => 
   month: i,
   capacity: 5,
 }));
+
+// The slice of state that gets persisted (locally or to a shared plan)
+export type PlanData = Pick<AppState, 'projects' | 'monthCapacities' | 'activePalette'>;
+
+export const getPlanData = (state: AppState): PlanData => ({
+  projects: state.projects,
+  monthCapacities: state.monthCapacities,
+  activePalette: state.activePalette,
+});
+
+export const applyPlanData = (data: PlanData) => {
+  const palette = PALETTE_NAMES.includes(data.activePalette) ? data.activePalette : 'forest';
+  const capacities = data.monthCapacities?.length === 12 ? data.monthCapacities : initialCapacities;
+  setActivePalette(palette);
+  useStore.setState({
+    projects: Array.isArray(data.projects) ? data.projects : [],
+    monthCapacities: capacities,
+    activePalette: palette,
+  });
+};
+
+// When the page is bound to a shared plan, the server is the source of truth:
+// never overwrite the user's local plan with it.
+const localPlanStorage: StateStorage = {
+  getItem: (name) => localStorage.getItem(name),
+  setItem: (name, value) => {
+    if (!isSharedMode()) localStorage.setItem(name, value);
+  },
+  removeItem: (name) => localStorage.removeItem(name),
+};
 
 export const useStore = create<AppState>()(
   persist(
@@ -309,6 +340,10 @@ export const useStore = create<AppState>()(
     {
       name: 'gram-storage',
       version: 1,
+      storage: createJSONStorage(() => localPlanStorage),
+      partialize: getPlanData,
+      // In shared mode the plan is loaded from the server instead
+      skipHydration: isSharedMode(),
       onRehydrateStorage: () => (state) => {
         if (state?.activePalette) {
           setActivePalette(state.activePalette);

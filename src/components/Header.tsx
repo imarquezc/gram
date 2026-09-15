@@ -1,4 +1,63 @@
 import { useStore, PALETTES, getActivePalette } from '../store/useStore';
+import { useSharedPlan, startSharing, copyShareLink } from '../store/sharedPlan';
+import type { SyncStatus } from '../store/sharedPlan';
+
+const STATUS_LABEL: Record<SyncStatus, string> = {
+  local: 'Local',
+  loading: 'Loading…',
+  saving: 'Saving…',
+  saved: 'Saved',
+  error: 'Not saved',
+};
+
+const STATUS_DOT: Record<SyncStatus, string> = {
+  local: 'bg-white/40',
+  loading: 'bg-white/40 animate-pulse',
+  saving: 'bg-amber-300 animate-pulse',
+  saved: 'bg-emerald-300',
+  error: 'bg-red-400',
+};
+
+const buttonClass =
+  'flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white/80 hover:text-white text-xs font-medium transition-all';
+
+function ShareControls() {
+  const { planId, status, message, toast } = useSharedPlan();
+
+  if (!planId) {
+    return (
+      <button
+        onClick={() => void startSharing()}
+        disabled={status === 'saving'}
+        className={buttonClass}
+        title="Create a link to share this plan"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+        </svg>
+        {toast ?? (status === 'saving' ? 'Sharing…' : status === 'error' ? message : 'Share')}
+      </button>
+    );
+  }
+
+  return (
+    <>
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 text-white/70 text-xs font-medium"
+        title={message ?? 'Changes are saved to the shared plan automatically'}
+      >
+        <span className={`w-2 h-2 rounded-full ${STATUS_DOT[status]}`} />
+        <span>{STATUS_LABEL[status]}</span>
+      </div>
+      <button onClick={() => void copyShareLink()} className={buttonClass} title="Copy the link to this plan">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+        </svg>
+        {toast ?? 'Copy link'}
+      </button>
+    </>
+  );
+}
 
 interface HeaderProps {
   layoutMode: 'side' | 'bottom';
@@ -22,6 +81,8 @@ export function Header({ layoutMode, onLayoutToggle }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <ShareControls />
+
           {/* Palette Switcher */}
           <button
             onClick={cyclePalette}
