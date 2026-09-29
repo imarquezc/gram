@@ -7,9 +7,10 @@ import type { Project } from '../types';
 interface ProjectCardProps {
   project: Project;
   expanded?: boolean; // Always expanded, no collapse toggle (for bottom layout)
+  onlyUnassigned?: boolean; // Show only sub-projects not yet placed on the timeline
 }
 
-export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
+export function ProjectCard({ project, expanded = false, onlyUnassigned = false }: ProjectCardProps) {
   const [newSubProjectName, setNewSubProjectName] = useState('');
   const [newSubProjectSize, setNewSubProjectSize] = useState(1);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -28,6 +29,9 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
   const allocatedSize = project.subProjects
     .filter((sp) => sp.startMonth !== null)
     .reduce((sum, sp) => sum + sp.size, 0);
+  const visibleSubProjects = onlyUnassigned
+    ? project.subProjects.filter((sp) => sp.startMonth === null)
+    : project.subProjects;
 
   const handleAddSubProject = () => {
     if (newSubProjectName.trim()) {
@@ -116,7 +120,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
 
           {/* Sub-projects - flex wrap to use horizontal space */}
           <div className="flex flex-wrap gap-2 mb-4 min-h-[36px]">
-            {project.subProjects.map((sp) => (
+            {visibleSubProjects.map((sp) => (
               <SubProjectChip
                 key={sp.id}
                 projectId={project.id}
@@ -128,7 +132,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
                 onToggleDone={() => updateSubProject(project.id, sp.id, { done: !sp.done })}
               />
             ))}
-            {project.subProjects.length === 0 && (
+            {visibleSubProjects.length === 0 && (
               <span className="text-gray-300 text-sm py-1">No sub-projects yet</span>
             )}
           </div>
@@ -272,7 +276,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
             <div className="px-3 pb-3 pt-1 border-t border-gray-100">
               {/* Sub-projects */}
               <div className="flex flex-wrap gap-1.5 mb-3 min-h-[32px]">
-                {project.subProjects.map((sp) => (
+                {visibleSubProjects.map((sp) => (
                   <SubProjectChip
                     key={sp.id}
                     projectId={project.id}
@@ -284,7 +288,7 @@ export function ProjectCard({ project, expanded = false }: ProjectCardProps) {
                     onToggleDone={() => updateSubProject(project.id, sp.id, { done: !sp.done })}
                   />
                 ))}
-                {project.subProjects.length === 0 && (
+                {visibleSubProjects.length === 0 && (
                   <span className="text-gray-300 text-xs py-1">No sub-projects</span>
                 )}
               </div>
