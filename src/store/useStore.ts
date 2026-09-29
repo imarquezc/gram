@@ -12,6 +12,8 @@ export const PALETTES: Record<PaletteName, { name: string; colors: Record<string
     name: 'Forest',
     colors: {
       'c1': '#5E8B5A', 'c2': '#7BAE7F', 'c3': '#C96B6B', 'c4': '#D4956A', 'c5': '#6B8CAE',
+      'c1-x': '#8466B8', 'c2-x': '#C0628C', 'c3-x': '#A8872A', 'c4-x': '#2F8F86', 'c5-x': '#8B5E3C',
+      'c1-y': '#34508F', 'c2-y': '#8F3B4A', 'c3-y': '#6B8A26', 'c4-y': '#C4652F', 'c5-y': '#5A3E8C',
       'c1-m': '#4A7A8C', 'c2-m': '#5B7A9E', 'c3-m': '#9B6B8C', 'c4-m': '#7A8B6B', 'c5-m': '#6B6B9B',
       'c1-s': '#6B8B8B', 'c2-s': '#7B9B8B', 'c3-s': '#9B7B8B', 'c4-s': '#7B8B9B', 'c5-s': '#8B7B9B',
       'n1': '#2D3748', 'n2': '#4A5568', 'n3': '#606770', 'n4': '#718096', 'n5': '#A0AEC0',
@@ -21,6 +23,8 @@ export const PALETTES: Record<PaletteName, { name: string; colors: Record<string
     name: 'Ocean',
     colors: {
       'c1': '#2E86AB', 'c2': '#5299D3', 'c3': '#7ECBA1', 'c4': '#45B7A0', 'c5': '#6C5B7B',
+      'c1-x': '#7B61C9', 'c2-x': '#C8609B', 'c3-x': '#B08A30', 'c4-x': '#D9694F', 'c5-x': '#274C77',
+      'c1-y': '#C27A1A', 'c2-y': '#9B3F6E', 'c3-y': '#6E9E3A', 'c4-y': '#A8522B', 'c5-y': '#C04A4A',
       'c1-m': '#3E92A3', 'c2-m': '#5A9EC7', 'c3-m': '#68B8C4', 'c4-m': '#4AAFB8', 'c5-m': '#7B6B8B',
       'c1-s': '#5A8A9A', 'c2-s': '#7AA3B5', 'c3-s': '#8ABBB8', 'c4-s': '#6AACAC', 'c5-s': '#8A8A9A',
       'n1': '#1A3A4A', 'n2': '#2A4A5A', 'n3': '#4A6A7A', 'n4': '#6A8A9A', 'n5': '#9AACB8',
@@ -30,6 +34,8 @@ export const PALETTES: Record<PaletteName, { name: string; colors: Record<string
     name: 'Sunset',
     colors: {
       'c1': '#E07A5F', 'c2': '#F2A65A', 'c3': '#D4A373', 'c4': '#BC6C6C', 'c5': '#8B5A5A',
+      'c1-x': '#7E4E8C', 'c2-x': '#3F8F8A', 'c3-x': '#4F74A8', 'c4-x': '#7D8B3A', 'c5-x': '#C8577A',
+      'c1-y': '#2F4A6B', 'c2-y': '#4E8A5B', 'c3-y': '#B08A1E', 'c4-y': '#9A6BC0', 'c5-y': '#7A2E3A',
       'c1-m': '#C97A6B', 'c2-m': '#E0956A', 'c3-m': '#C9A07A', 'c4-m': '#A86B6B', 'c5-m': '#9A6B7B',
       'c1-s': '#B08A7A', 'c2-s': '#C9A88A', 'c3-s': '#BDA08A', 'c4-s': '#9A7A7A', 'c5-s': '#8A7A8A',
       'n1': '#3D2C2C', 'n2': '#5A4545', 'n3': '#7A6565', 'n4': '#9A8585', 'n5': '#B8A8A8',
