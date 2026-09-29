@@ -16,6 +16,7 @@ export function ProjectCard({ project, expanded = false, onlyUnassigned = false 
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   const {
+    projects,
     removeProject,
     updateProjectName,
     updateProjectColor,
@@ -32,6 +33,27 @@ export function ProjectCard({ project, expanded = false, onlyUnassigned = false 
   const visibleSubProjects = onlyUnassigned
     ? project.subProjects.filter((sp) => sp.startMonth === null)
     : project.subProjects;
+
+  // Colors already taken by other projects are dimmed in the picker (still selectable)
+  const colorUsers = new Map<string, string[]>();
+  projects
+    .filter((p) => p.id !== project.id)
+    .forEach((p) => colorUsers.set(p.color, [...(colorUsers.get(p.color) ?? []), p.name]));
+
+  const swatchProps = (colorKey: string) => {
+    const isCurrent = colorKey === project.color;
+    const users = colorUsers.get(colorKey);
+    return {
+      title: isCurrent ? 'Current color' : users ? `Used by ${users.join(', ')}` : undefined,
+      className: `w-6 h-6 rounded-full hover:scale-110 transition-all ${
+        isCurrent
+          ? 'ring-2 ring-gray-800 ring-offset-2'
+          : users
+            ? 'ring-1 ring-black/5 opacity-25 hover:opacity-70'
+            : 'ring-1 ring-black/5'
+      }`,
+    };
+  };
 
   const handleAddSubProject = () => {
     if (newSubProjectName.trim()) {
@@ -76,7 +98,7 @@ export function ProjectCard({ project, expanded = false, onlyUnassigned = false 
                         updateProjectColor(project.id, colorKey);
                         setShowColorPicker(false);
                       }}
-                      className="w-6 h-6 rounded-full hover:scale-110 transition-transform ring-1 ring-black/5"
+                      {...swatchProps(colorKey)}
                       style={{ backgroundColor: getColorHex(colorKey) }}
                     />
                   ))}
@@ -227,7 +249,7 @@ export function ProjectCard({ project, expanded = false, onlyUnassigned = false 
                       updateProjectColor(project.id, colorKey);
                       setShowColorPicker(false);
                     }}
-                    className="w-6 h-6 rounded-full hover:scale-110 transition-transform ring-1 ring-black/5"
+                    {...swatchProps(colorKey)}
                     style={{ backgroundColor: getColorHex(colorKey) }}
                   />
                 ))}
