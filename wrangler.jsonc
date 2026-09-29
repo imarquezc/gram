@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gram",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-01",
+  "routes": [{ "pattern": "gram.nacx.cl", "custom_domain": true }],
+  // Keep the workers.dev URL as a fallback and enable per-version preview URLs
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gram",
+      // Replace with the id printed by `npx wrangler d1 create gram`
+      "database_id": "92da2d3a-49b7-44d6-9fcc-58931e97a09b",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "observability": { "enabled": true }
+}

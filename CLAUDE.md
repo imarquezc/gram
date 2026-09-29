@@ -20,13 +20,19 @@ Gram is a visual capacity planning tool for scheduling development work across a
 - **@dnd-kit** for drag-and-drop functionality
 - **Framer Motion** for animations
 - **Tailwind CSS 4** for styling (Apple-inspired glassmorphism design)
+- **Cloudflare Workers + D1** for hosting and shared plans (see README for deploy)
 
 ## Key Files
 
 ```
+index.html                  # Landing page at / (static HTML + CSS, no React)
+app/index.html              # Entry for the planner at /app/
 src/
 ├── App.tsx                 # Main app, DnD context, layout switching, resize logic
 ├── store/useStore.ts       # Zustand store with all state and actions
+├── store/sharedMode.ts     # Which shared plan id (if any) the page is bound to (from ?p=)
+├── store/sharedPlan.ts     # Sync engine: load shared plan, autosave, polling, share/copy link
+├── lib/planApi.ts          # Fetch helpers for /api/plans/:id
 ├── types/index.ts          # TypeScript interfaces
 ├── index.css               # Global styles, glass effects, Apple-style shadows
 └── components/
@@ -36,6 +42,9 @@ src/
     ├── ProjectsPanel.tsx   # Sidebar/bottom panel containing project cards
     ├── ProjectCard.tsx     # Expandable project with sub-projects list
     └── SubProjectChip.tsx  # Draggable chip for unassigned sub-projects
+worker/index.ts             # Cloudflare Worker: serves dist/ and the plans API (D1)
+migrations/                 # D1 schema (`plans` table)
+wrangler.jsonc              # Worker config (assets + D1 binding)
 ```
 
 ## State Structure (Zustand)
@@ -59,6 +68,7 @@ interface AppState {
 4. **Capacity Adjustment**: +/- buttons per month to set available slots
 5. **Visual Feedback**: Over-capacity rows shown in red, drop targets highlight on hover
 6. **Persistence**: All data saved to localStorage (`gram-storage`, `gram-layout`, `gram-timeline-height`)
+7. **Sharing**: "Share" publishes the plan to the Worker API (`/app/?p=<id>` in the URL). In shared mode the server is the source of truth: the plan loads from `/api/plans/:id`, edits autosave (debounced), other tabs poll for changes, and localStorage is left untouched
 
 ## UI Patterns
 
