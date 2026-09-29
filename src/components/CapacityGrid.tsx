@@ -39,7 +39,17 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
   const currentMonth = today.getMonth();
   const daysInMonth = new Date(today.getFullYear(), currentMonth + 1, 0).getDate();
   const monthFraction = (today.getDate() - 1) / daysInMonth;
-  const todayFraction = (currentMonth + monthFraction) / 12;
+  const todayMonths = currentMonth + monthFraction;
+  const todayFraction = todayMonths / 12;
+
+  // Progress vs plan: dev-months marked done vs dev-months the timeline expected by today
+  const done = assignedItems
+    .filter(({ subProject }) => subProject.done)
+    .reduce((sum, { subProject }) => sum + subProject.size, 0);
+  const plannedToDate = assignedItems.reduce((sum, { subProject }) => {
+    const elapsed = todayMonths - subProject.startMonth!;
+    return sum + Math.min(Math.max(elapsed, 0), subProject.size);
+  }, 0);
 
   return (
     <div className="glass rounded-2xl shadow-apple-lg border border-white/50 overflow-hidden flex flex-col" style={{ height }}>
@@ -152,6 +162,9 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
             <StatPill label="Allocated" value={allocated} variant="success" />
             <StatPill label="Pending" value={unallocated} variant={unallocated > 0 ? 'warning' : 'neutral'} />
             <StatPill label="Capacity" value={capacity} />
+            {allocated > 0 && (
+              <ProgressPill done={done} plannedToDate={plannedToDate} allocated={allocated} />
+            )}
           </div>
 
           {/* Legend */}
@@ -202,6 +215,49 @@ function StatPill({ label, value, variant = 'neutral' }: StatPillProps) {
     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${styles[variant]}`}>
       <span className="text-[11px] font-medium opacity-70">{label}</span>
       <span className="text-sm font-bold tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+interface ProgressPillProps {
+  done: number;
+  plannedToDate: number;
+  allocated: number;
+}
+
+function ProgressPill({ done, plannedToDate, allocated }: ProgressPillProps) {
+  const fmt = (n: number) => (Math.round(n * 10) / 10).toString();
+  const delta = Math.round((done - plannedToDate) * 10) / 10;
+  const donePct = Math.min((done / allocated) * 100, 100);
+  const planPct = Math.min((plannedToDate / allocated) * 100, 100);
+
+  const status =
+    delta >= 0
+      ? { text: delta === 0 ? 'On track' : `+${fmt(delta)} ahead`, className: 'text-emerald-700 bg-emerald-50' }
+      : { text: `${fmt(delta)} behind`, className: 'text-rose-700 bg-rose-50' };
+
+  return (
+    <div
+      className="ml-auto flex items-center gap-3 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700"
+      title={`Done: ${fmt(done)} dev-months · Planned by today: ${fmt(plannedToDate)} · Allocated: ${allocated}`}
+    >
+      <span className="text-[11px] font-medium opacity-70">Progress</span>
+      <span className="text-sm font-bold tabular-nums">
+        {fmt(done)}
+        <span className="text-[11px] font-medium opacity-50">/{allocated}</span>
+      </span>
+      <div className="relative w-32 h-2 rounded-full bg-gray-200 overflow-visible">
+        <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-500" style={{ width: `${donePct}%` }} />
+        <div
+          className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-rose-500"
+          style={{ left: `calc(${planPct}% - 1px)` }}
+          title={`Planned by today: ${fmt(plannedToDate)}`}
+        />
+      </div>
+      <span className="text-[11px] opacity-60 tabular-nums">plan {fmt(plannedToDate)}</span>
+      <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-md tabular-nums ${status.className}`}>
+        {status.text}
+      </span>
     </div>
   );
 }
