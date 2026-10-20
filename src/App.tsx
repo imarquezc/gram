@@ -28,6 +28,8 @@ function App() {
 
   const [layoutMode, setLayoutMode] = useState<'side' | 'bottom'>(getStoredLayout);
   const [timelineHeight, setTimelineHeight] = useState(getStoredHeight);
+  // Date the timeline's "today" marker points at; null = the real today
+  const [referenceDate, setReferenceDate] = useState<Date | null>(null);
 
   // Persist layout mode
   useEffect(() => {
@@ -148,7 +150,12 @@ function App() {
         {layoutMode === 'side' ? (
           <main className="flex gap-5 p-5 pt-4 max-w-full">
             <div className="flex-1 min-w-0">
-              <CapacityGrid height={timelineHeight} onResizeStart={handleResizeStart} />
+              <CapacityGrid
+                height={timelineHeight}
+                onResizeStart={handleResizeStart}
+                referenceDate={referenceDate}
+                onReferenceDateChange={setReferenceDate}
+              />
             </div>
             <div className="w-80 flex-shrink-0">
               <div className="sticky top-20">
@@ -158,7 +165,12 @@ function App() {
           </main>
         ) : (
           <main className="p-5 pt-4 space-y-4 max-w-full">
-            <CapacityGrid height={timelineHeight} onResizeStart={handleResizeStart} />
+            <CapacityGrid
+              height={timelineHeight}
+              onResizeStart={handleResizeStart}
+              referenceDate={referenceDate}
+              onReferenceDateChange={setReferenceDate}
+            />
             <ProjectsPanel maxHeight="none" horizontal />
           </main>
         )}
