@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore, COLOR_KEYS, getColorHex } from '../store/useStore';
 import { SubProjectChip } from './SubProjectChip';
-import type { Project } from '../types';
+import type { Project, SubProject } from '../types';
 
 interface ProjectCardProps {
   project: Project;
   expanded?: boolean; // Always expanded, no collapse toggle (for bottom layout)
-  onlyUnassigned?: boolean; // Show only sub-projects not yet placed on the timeline
+  filter?: (subProject: SubProject) => boolean; // Which sub-projects to show (panel filters)
 }
 
-export function ProjectCard({ project, expanded = false, onlyUnassigned = false }: ProjectCardProps) {
+export function ProjectCard({ project, expanded = false, filter }: ProjectCardProps) {
   const [newSubProjectName, setNewSubProjectName] = useState('');
   const [newSubProjectSize, setNewSubProjectSize] = useState(1);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -29,9 +29,7 @@ export function ProjectCard({ project, expanded = false, onlyUnassigned = false 
   const allocatedSize = project.subProjects
     .filter((sp) => sp.startMonth !== null)
     .reduce((sum, sp) => sum + sp.size, 0);
-  const visibleSubProjects = onlyUnassigned
-    ? project.subProjects.filter((sp) => sp.startMonth === null)
-    : project.subProjects;
+  const visibleSubProjects = filter ? project.subProjects.filter(filter) : project.subProjects;
 
   const handleAddSubProject = () => {
     if (newSubProjectName.trim()) {

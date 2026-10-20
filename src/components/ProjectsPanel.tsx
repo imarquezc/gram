@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import { ProjectCard } from './ProjectCard';
+import type { SubProject } from '../types';
 
 interface ProjectsPanelProps {
   maxHeight?: string;
@@ -13,22 +14,28 @@ export function ProjectsPanel({ maxHeight = 'calc(100vh - 100px)', horizontal = 
   const projects = useStore((s) => s.projects);
   const addProject = useStore((s) => s.addProject);
   const [onlyUnassigned, setOnlyUnassigned] = useState(false);
+  const [hideDone, setHideDone] = useState(false);
 
-  const isFullyAssigned = (p: (typeof projects)[number]) =>
-    p.subProjects.length > 0 && p.subProjects.every((sp) => sp.startMonth !== null);
-  const unassignedCount = projects.reduce(
-    (sum, p) => sum + p.subProjects.filter((sp) => sp.startMonth === null).length,
-    0
-  );
-  const visibleProjects = onlyUnassigned ? projects.filter((p) => !isFullyAssigned(p)) : projects;
-  const allScheduled = onlyUnassigned && projects.length > 0 && visibleProjects.length === 0;
+  const isVisible = (sp: SubProject) =>
+    (!onlyUnassigned || sp.startMonth === null) && (!hideDone || !sp.done);
+  const allSubProjects = projects.flatMap((p) => p.subProjects);
+  const unassignedCount = allSubProjects.filter(
+    (sp) => sp.startMonth === null && (!hideDone || !sp.done)
+  ).length;
+  const doneCount = allSubProjects.filter((sp) => sp.done).length;
+  // Empty projects stay visible so sub-projects can still be added to them
+  const visibleProjects = projects.filter((p) => p.subProjects.length === 0 || p.subProjects.some(isVisible));
+  const nothingVisible = (onlyUnassigned || hideDone) && projects.length > 0 && visibleProjects.length === 0;
 
-  const filterToggle = (
-    <FilterToggle
-      onlyUnassigned={onlyUnassigned}
-      unassignedCount={unassignedCount}
-      onChange={setOnlyUnassigned}
-    />
+  const filters = (
+    <div className="flex items-center gap-1.5">
+      <FilterToggle
+        onlyUnassigned={onlyUnassigned}
+        unassignedCount={unassignedCount}
+        onChange={setOnlyUnassigned}
+      />
+      <HideDoneToggle hideDone={hideDone} doneCount={doneCount} onChange={setHideDone} />
+    </div>
   );
 
   const handleAddProject = () => {
@@ -46,7 +53,7 @@ export function ProjectsPanel({ maxHeight = 'calc(100vh - 100px)', horizontal = 
         <div className="px-5 py-3.5 border-b border-black/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-base font-semibold text-gray-900">Projects</h2>
-            {filterToggle}
+            {filters}
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -74,10 +81,10 @@ export function ProjectsPanel({ maxHeight = 'calc(100vh - 100px)', horizontal = 
         <div className="p-4 space-y-3">
           <AnimatePresence mode="popLayout">
             {visibleProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} expanded onlyUnassigned={onlyUnassigned} />
+              <ProjectCard key={project.id} project={project} expanded filter={isVisible} />
             ))}
           </AnimatePresence>
-          {allScheduled && <AllScheduled />}
+          {nothingVisible && <NothingVisible onlyUnassigned={onlyUnassigned} />}
           {projects.length === 0 && (
             <div className="text-center py-8 text-gray-400">
               <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-gray-100 flex items-center justify-center">
@@ -99,10 +106,7 @@ export function ProjectsPanel({ maxHeight = 'calc(100vh - 100px)', horizontal = 
     <div className="glass rounded-2xl shadow-apple-lg border border-white/50 overflow-hidden flex flex-col" style={{ maxHeight }}>
       {/* Header */}
       <div className="px-4 py-3.5 border-b border-black/5 flex-shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-gray-900">Projects</h2>
-          {filterToggle}
-        </div>
+        <h2 className="text-base font-semibold text-gray-900 mb-3">Projects</h2>
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -123,16 +127,17 @@ export function ProjectsPanel({ maxHeight = 'calc(100vh - 100px)', horizontal = 
             Add
           </button>
         </div>
+        <div className="mt-2.5">{filters}</div>
       </div>
 
       {/* Projects List - Scrollable */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
         <AnimatePresence mode="popLayout">
           {visibleProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} onlyUnassigned={onlyUnassigned} />
+            <ProjectCard key={project.id} project={project} filter={isVisible} />
           ))}
         </AnimatePresence>
-        {allScheduled && <AllScheduled />}
+        {nothingVisible && <NothingVisible onlyUnassigned={onlyUnassigned} />}
         {projects.length === 0 && (
           <div className="text-center py-10 text-gray-400">
             <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-gray-100 flex items-center justify-center">
@@ -183,7 +188,46 @@ function FilterToggle({ onlyUnassigned, unassignedCount, onChange }: FilterToggl
   );
 }
 
-function AllScheduled() {
+interface HideDoneToggleProps {
+  hideDone: boolean;
+  doneCount: number;
+  onChange: (hideDone: boolean) => void;
+}
+
+function HideDoneToggle({ hideDone, doneCount, onChange }: HideDoneToggleProps) {
+  return (
+    <button
+      onClick={() => onChange(!hideDone)}
+      aria-pressed={hideDone}
+      title={hideDone ? 'Show sub-projects marked as done' : 'Hide sub-projects marked as done'}
+      className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+        hideDone ? 'bg-emerald-50 text-emerald-700' : 'bg-black/5 text-gray-500 hover:text-gray-700'
+      }`}
+    >
+      <span
+        className={`w-3 h-3 rounded flex items-center justify-center transition-colors ${
+          hideDone ? 'bg-emerald-500 text-white' : 'bg-white ring-1 ring-gray-300'
+        }`}
+      >
+        {hideDone && (
+          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
+          </svg>
+        )}
+      </span>
+      Hide done
+      <span
+        className={`px-1 rounded tabular-nums text-[10px] ${
+          hideDone ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200/70 text-gray-500'
+        }`}
+      >
+        {doneCount}
+      </span>
+    </button>
+  );
+}
+
+function NothingVisible({ onlyUnassigned }: { onlyUnassigned: boolean }) {
   return (
     <div className="text-center py-8 text-gray-400">
       <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-emerald-50 flex items-center justify-center">
@@ -191,8 +235,10 @@ function AllScheduled() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       </div>
-      <p className="text-sm">Everything is scheduled</p>
-      <p className="text-xs text-gray-300 mt-1">No sub-projects left to place</p>
+      <p className="text-sm">{onlyUnassigned ? 'Everything is scheduled' : 'Everything is done'}</p>
+      <p className="text-xs text-gray-300 mt-1">
+        {onlyUnassigned ? 'No sub-projects left to place' : 'All sub-projects are marked as done'}
+      </p>
     </div>
   );
 }
