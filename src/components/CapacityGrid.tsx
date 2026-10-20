@@ -1,13 +1,35 @@
 import { useDroppable } from '@dnd-kit/core';
+import { useRef } from 'react';
 import { useStore, getMonthName, getColorHex } from '../store/useStore';
 import { PlacedBlock } from './PlacedBlock';
 
 interface CapacityGridProps {
   height: number;
   onResizeStart: (e: React.MouseEvent) => void;
+  referenceDate: Date | null; // Where the "today" marker sits; null = the real today
+  onReferenceDateChange: (date: Date | null) => void;
 }
 
-export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
+// Position of a date on the timeline, in months from Jan 1 (e.g. Mar 16 ≈ 2.5)
+const monthsFromDate = (date: Date) => {
+  const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  return date.getMonth() + (date.getDate() - 1) / daysInMonth;
+};
+
+// Inverse of monthsFromDate, snapped to the nearest day and clamped to the given year
+const dateFromMonths = (months: number, year: number) => {
+  const clamped = Math.min(Math.max(months, 0), 12);
+  const month = Math.min(Math.floor(clamped), 11);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const date = new Date(year, month, Math.round((clamped - month) * daysInMonth) + 1);
+  return date.getFullYear() > year ? new Date(year, 11, 31) : date;
+};
+
+const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+
+const formatDay = (date: Date) => `${getMonthName(date.getMonth())} ${date.getDate()}`;
+
+export function CapacityGrid({ height, onResizeStart, referenceDate, onReferenceDateChange }: CapacityGridProps) {
   const months = Array.from({ length: 12 }, (_, i) => i);
   const monthCapacities = useStore((s) => s.monthCapacities);
   const updateMonthCapacity = useStore((s) => s.updateMonthCapacity);
@@ -35,12 +57,21 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
 
   const rows = Array.from({ length: numRows }, (_, i) => i);
 
-  const today = new Date();
-  const currentMonth = today.getMonth();
-  const daysInMonth = new Date(today.getFullYear(), currentMonth + 1, 0).getDate();
-  const monthFraction = (today.getDate() - 1) / daysInMonth;
-  const todayMonths = currentMonth + monthFraction;
+  const realToday = new Date();
+  const today = referenceDate ?? realToday;
+  const todayMonths = monthsFromDate(today);
   const todayFraction = todayMonths / 12;
+  const asOf = referenceDate ? formatDay(referenceDate) : 'today';
+
+  // Dragging the marker label moves the reference date along the month area
+  const todayTrackRef = useRef<HTMLDivElement>(null);
+  const moveTodayTo = (clientX: number) => {
+    const rect = todayTrackRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return;
+    const date = dateFromMonths(((clientX - rect.left) / rect.width) * 12, realToday.getFullYear());
+    if (isSameDay(date, today)) return;
+    onReferenceDateChange(isSameDay(date, realToday) ? null : date);
+  };
 
   // Progress vs plan: dev-months marked done vs dev-months the timeline expected by today
   const done = assignedItems
@@ -56,7 +87,21 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
       {/* Header */}
       <div className="px-5 py-3 border-b border-black/5 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900">Timeline</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-semibold text-gray-900">Timeline</h2>
+            {referenceDate && (
+              <button
+                onClick={() => onReferenceDateChange(null)}
+                className="flex items-center gap-1 px-2 py-1 rounded-md bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-medium transition-colors"
+                title="Move the marker back to today"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                </svg>
+                Back to today
+              </button>
+            )}
+          </div>
           <p className="text-xs text-gray-500">
             Drag items from Projects to schedule them
           </p>
@@ -98,14 +143,24 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
 
         {/* Grid - Stretches to fill available space */}
         <div className="rounded-xl overflow-hidden border border-gray-200/80 bg-white flex-1 flex flex-col min-h-0 relative">
-          {/* Today indicator */}
-          <div
-            className="absolute top-0 bottom-0 pointer-events-none z-20"
-            style={{ left: `calc(2.5rem + (100% - 2.5rem) * ${todayFraction})` }}
-          >
-            <div className="relative w-px h-full bg-rose-500/70 shadow-[0_0_4px_rgba(244,63,94,0.4)]">
-              <div className="absolute top-0 -translate-x-1/2 px-1.5 py-0.5 rounded-b-md bg-rose-500 text-white text-[9px] font-semibold tracking-wide uppercase whitespace-nowrap">
-                Today
+          {/* Today indicator - spans the month area (row labels are w-10); the label is a drag handle */}
+          <div ref={todayTrackRef} className="absolute inset-y-0 left-10 right-0 pointer-events-none z-20">
+            <div className="absolute top-0 bottom-0" style={{ left: `${todayFraction * 100}%` }}>
+              <div className="relative w-px h-full bg-rose-500/70 shadow-[0_0_4px_rgba(244,63,94,0.4)]">
+                <div
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                  }}
+                  onPointerMove={(e) => {
+                    if (e.currentTarget.hasPointerCapture(e.pointerId)) moveTodayTo(e.clientX);
+                  }}
+                  onDoubleClick={() => onReferenceDateChange(null)}
+                  className="absolute top-0 -translate-x-1/2 px-1.5 py-0.5 rounded-b-md bg-rose-500 hover:bg-rose-600 text-white text-[9px] font-semibold tracking-wide uppercase whitespace-nowrap pointer-events-auto cursor-ew-resize select-none touch-none transition-colors"
+                  title={`Drag to see the plan as of another date${referenceDate ? ' · double-click to go back to today' : ''}`}
+                >
+                  {referenceDate ? formatDay(referenceDate) : 'Today'}
+                </div>
               </div>
             </div>
           </div>
@@ -163,7 +218,7 @@ export function CapacityGrid({ height, onResizeStart }: CapacityGridProps) {
             <StatPill label="Pending" value={unallocated} variant={unallocated > 0 ? 'warning' : 'neutral'} />
             <StatPill label="Capacity" value={capacity} />
             {allocated > 0 && (
-              <ProgressPill done={done} plannedToDate={plannedToDate} allocated={allocated} />
+              <ProgressPill done={done} plannedToDate={plannedToDate} allocated={allocated} asOf={asOf} />
             )}
           </div>
 
@@ -223,9 +278,10 @@ interface ProgressPillProps {
   done: number;
   plannedToDate: number;
   allocated: number;
+  asOf: string; // "today" or the date the marker was moved to
 }
 
-function ProgressPill({ done, plannedToDate, allocated }: ProgressPillProps) {
+function ProgressPill({ done, plannedToDate, allocated, asOf }: ProgressPillProps) {
   const fmt = (n: number) => (Math.round(n * 10) / 10).toString();
   const delta = Math.round((done - plannedToDate) * 10) / 10;
   const donePct = Math.min((done / allocated) * 100, 100);
@@ -239,7 +295,7 @@ function ProgressPill({ done, plannedToDate, allocated }: ProgressPillProps) {
   return (
     <div
       className="ml-auto flex items-center gap-3 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700"
-      title={`Done: ${fmt(done)} dev-months · Planned by today: ${fmt(plannedToDate)} · Allocated: ${allocated}`}
+      title={`Done: ${fmt(done)} dev-months · Planned by ${asOf}: ${fmt(plannedToDate)} · Allocated: ${allocated}`}
     >
       <span className="text-[11px] font-medium opacity-70">Progress</span>
       <span className="text-sm font-bold tabular-nums">
@@ -251,7 +307,7 @@ function ProgressPill({ done, plannedToDate, allocated }: ProgressPillProps) {
         <div
           className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-rose-500"
           style={{ left: `calc(${planPct}% - 1px)` }}
-          title={`Planned by today: ${fmt(plannedToDate)}`}
+          title={`Planned by ${asOf}: ${fmt(plannedToDate)}`}
         />
       </div>
       <span className="text-[11px] opacity-60 tabular-nums">plan {fmt(plannedToDate)}</span>
