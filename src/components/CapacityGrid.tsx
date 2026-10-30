@@ -6,14 +6,15 @@ import { PlacedBlock } from './PlacedBlock';
 interface CapacityGridProps {
   height: number;
   onResizeStart: (e: React.MouseEvent) => void;
-  referenceDate: Date | null; // Where the "today" marker sits; null = the real today
+  referenceDate: Date | null; // Where the "today" marker was moved to (applies to its own year); null = the real today
   onReferenceDateChange: (date: Date | null) => void;
 }
 
-// Position of a date on the timeline, in months from Jan 1 (e.g. Mar 16 ≈ 2.5)
-const monthsFromDate = (date: Date) => {
+// Position of a date on a year's timeline, in months from its Jan 1 (e.g. Mar 16 ≈ 2.5).
+// Dates in other years fall outside 0-12 (negative before it, 12+ after it).
+const monthsFromDate = (date: Date, year: number) => {
   const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  return date.getMonth() + (date.getDate() - 1) / daysInMonth;
+  return (date.getFullYear() - year) * 12 + date.getMonth() + (date.getDate() - 1) / daysInMonth;
 };
 
 // Inverse of monthsFromDate, snapped to the nearest day and clamped to the given year
@@ -29,8 +30,9 @@ const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
 
 const formatDay = (date: Date) => `${getMonthName(date.getMonth())} ${date.getDate()}`;
 
-export function CapacityGrid({ height, onResizeStart, referenceDate, onReferenceDateChange }: CapacityGridProps) {
+export function CapacityGrid({ height, onResizeStart, referenceDate: movedDate, onReferenceDateChange }: CapacityGridProps) {
   const months = Array.from({ length: 12 }, (_, i) => i);
+  const activeYear = useStore((s) => s.activeYear);
   const monthCapacities = useStore((s) => s.monthCapacities);
   const updateMonthCapacity = useStore((s) => s.updateMonthCapacity);
   const getAllAssignedSubProjects = useStore((s) => s.getAllAssignedSubProjects);
@@ -58,9 +60,12 @@ export function CapacityGrid({ height, onResizeStart, referenceDate, onReference
   const rows = Array.from({ length: numRows }, (_, i) => i);
 
   const realToday = new Date();
+  const referenceDate = movedDate?.getFullYear() === activeYear ? movedDate : null;
   const today = referenceDate ?? realToday;
-  const todayMonths = monthsFromDate(today);
+  const todayMonths = monthsFromDate(today, activeYear);
   const todayFraction = todayMonths / 12;
+  // Only the year that contains "today" shows the marker; past years count as fully elapsed, future ones as not started
+  const showToday = todayMonths >= 0 && todayMonths < 12;
   const asOf = referenceDate ? formatDay(referenceDate) : 'today';
 
   // Dragging the marker label moves the reference date along the month area
@@ -68,7 +73,7 @@ export function CapacityGrid({ height, onResizeStart, referenceDate, onReference
   const moveTodayTo = (clientX: number) => {
     const rect = todayTrackRef.current?.getBoundingClientRect();
     if (!rect || rect.width === 0) return;
-    const date = dateFromMonths(((clientX - rect.left) / rect.width) * 12, realToday.getFullYear());
+    const date = dateFromMonths(((clientX - rect.left) / rect.width) * 12, activeYear);
     if (isSameDay(date, today)) return;
     onReferenceDateChange(isSameDay(date, realToday) ? null : date);
   };
@@ -88,7 +93,9 @@ export function CapacityGrid({ height, onResizeStart, referenceDate, onReference
       <div className="px-5 py-3 border-b border-black/5 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="text-base font-semibold text-gray-900">Timeline</h2>
+            <h2 className="text-base font-semibold text-gray-900">
+              Timeline <span className="text-gray-400 font-medium tabular-nums">{activeYear}</span>
+            </h2>
             {referenceDate && (
               <button
                 onClick={() => onReferenceDateChange(null)}
@@ -145,24 +152,26 @@ export function CapacityGrid({ height, onResizeStart, referenceDate, onReference
         <div className="rounded-xl overflow-hidden border border-gray-200/80 bg-white flex-1 flex flex-col min-h-0 relative">
           {/* Today indicator - spans the month area (row labels are w-10); the label is a drag handle */}
           <div ref={todayTrackRef} className="absolute inset-y-0 left-10 right-0 pointer-events-none z-20">
-            <div className="absolute top-0 bottom-0" style={{ left: `${todayFraction * 100}%` }}>
-              <div className="relative w-px h-full bg-rose-500/70 shadow-[0_0_4px_rgba(244,63,94,0.4)]">
-                <div
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                  }}
-                  onPointerMove={(e) => {
-                    if (e.currentTarget.hasPointerCapture(e.pointerId)) moveTodayTo(e.clientX);
-                  }}
-                  onDoubleClick={() => onReferenceDateChange(null)}
-                  className="absolute top-0 -translate-x-1/2 px-1.5 py-0.5 rounded-b-md bg-rose-500 hover:bg-rose-600 text-white text-[9px] font-semibold tracking-wide uppercase whitespace-nowrap pointer-events-auto cursor-ew-resize select-none touch-none transition-colors"
-                  title={`Drag to see the plan as of another date${referenceDate ? ' · double-click to go back to today' : ''}`}
-                >
-                  {referenceDate ? formatDay(referenceDate) : 'Today'}
+            {showToday && (
+              <div className="absolute top-0 bottom-0" style={{ left: `${todayFraction * 100}%` }}>
+                <div className="relative w-px h-full bg-rose-500/70 shadow-[0_0_4px_rgba(244,63,94,0.4)]">
+                  <div
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                    }}
+                    onPointerMove={(e) => {
+                      if (e.currentTarget.hasPointerCapture(e.pointerId)) moveTodayTo(e.clientX);
+                    }}
+                    onDoubleClick={() => onReferenceDateChange(null)}
+                    className="absolute top-0 -translate-x-1/2 px-1.5 py-0.5 rounded-b-md bg-rose-500 hover:bg-rose-600 text-white text-[9px] font-semibold tracking-wide uppercase whitespace-nowrap pointer-events-auto cursor-ew-resize select-none touch-none transition-colors"
+                    title={`Drag to see the plan as of another date${referenceDate ? ' · double-click to go back to today' : ''}`}
+                  >
+                    {referenceDate ? formatDay(referenceDate) : 'Today'}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {rows.map((rowIndex) => (

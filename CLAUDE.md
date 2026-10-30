@@ -11,6 +11,7 @@ Gram is a visual capacity planning tool for scheduling development work across a
 - **Timeline**: A 12-month grid where sub-projects are placed. Each month has configurable capacity (number of rows)
 - **Dev-month**: Unit of work measurement. A sub-project of size 3 spans 3 months on the timeline
 - **Capacity**: Per-month limit on how many concurrent tasks can run (adjustable with +/- buttons)
+- **Year**: A plan holds one or more calendar years, each with its own projects and capacities. The header switches between them
 
 ## Tech Stack
 
@@ -51,14 +52,20 @@ wrangler.jsonc              # Worker config (assets + D1 binding)
 
 ```typescript
 interface AppState {
-  projects: Project[];           // All projects with their sub-projects
-  monthCapacities: MonthCapacity[]; // Capacity per month (0-11)
+  activeYear: number;            // The year being viewed
+  projects: Project[];           // The active year's projects with their sub-projects
+  monthCapacities: MonthCapacity[]; // The active year's capacity per month (0-11)
+  otherYears: Record<string, YearPlan>; // Every other year, keyed by year
+
+  // Year actions: switchYear, addYear (copies the latest year's capacities), removeYear
 
   // Actions for CRUD on projects/sub-projects
   // Assignment actions for placing sub-projects on timeline
   // Computed getters for totals and slot availability
 }
 ```
+
+The active year is kept "unpacked" in `projects`/`monthCapacities` so components and actions only ever deal with one year. `getPlanData` reassembles the persisted/shared format, `{ years: { [year]: { projects, monthCapacities } }, activePalette }`. `normalizePlanData` also reads the pre-year format (top-level `projects`), treating it as 2026; the Worker rejects that format on save so an outdated tab can't overwrite other years.
 
 ## Features
 
@@ -67,7 +74,7 @@ interface AppState {
 3. **Timeline Resize**: Drag handle to resize timeline height; rows stretch/compress
 4. **Capacity Adjustment**: +/- buttons per month to set available slots
 5. **Visual Feedback**: Over-capacity rows shown in red, drop targets highlight on hover
-6. **Persistence**: All data saved to localStorage (`gram-storage`, `gram-layout`, `gram-timeline-height`)
+6. **Persistence**: All data saved to localStorage (`gram-storage`, `gram-layout`, `gram-timeline-height`, `gram-year` for the viewed year)
 7. **Sharing**: "Share" publishes the plan to the Worker API (`/app/?p=<id>` in the URL). In shared mode the server is the source of truth: the plan loads from `/api/plans/:id`, edits autosave (debounced), other tabs poll for changes, and localStorage is left untouched
 
 ## UI Patterns

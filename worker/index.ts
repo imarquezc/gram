@@ -44,6 +44,17 @@ async function getPlan(env: Env, id: string, request: Request): Promise<Response
   return json({ data: JSON.parse(row.data), updatedAt: row.updated_at }, 200, { ETag: etag });
 }
 
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+function isPlan(data: unknown): boolean {
+  if (!isObject(data) || !isObject(data.years)) return false;
+  return Object.entries(data.years).every(
+    ([year, plan]) =>
+      /^\d{4}$/.test(year) && isObject(plan) && Array.isArray(plan.projects) && Array.isArray(plan.monthCapacities)
+  );
+}
+
 async function putPlan(env: Env, id: string, request: Request): Promise<Response> {
   const length = Number(request.headers.get('Content-Length') ?? 0);
   if (length > MAX_BODY_BYTES) return error('Plan too large', 413);
@@ -57,14 +68,9 @@ async function putPlan(env: Env, id: string, request: Request): Promise<Response
   } catch {
     return error('Body must be JSON', 400);
   }
-  if (
-    typeof data !== 'object' ||
-    data === null ||
-    !Array.isArray((data as { projects?: unknown }).projects) ||
-    !Array.isArray((data as { monthCapacities?: unknown }).monthCapacities)
-  ) {
-    return error('Body must be a plan object', 400);
-  }
+  // Plans are split by year. The pre-year format (projects at the top level) is rejected
+  // so a tab still running an old build can't overwrite every other year.
+  if (!isPlan(data)) return error('Body must be a plan object', 400);
 
   const updatedAt = Date.now();
   await env.DB.prepare(

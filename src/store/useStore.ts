@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
-import type { AppState, Project, SubProject, MonthCapacity } from '../types';
+import type { AppState, Project, SubProject, MonthCapacity, YearPlan } from '../types';
 import { isSharedMode } from './sharedMode';
 
 // Three color palettes with semantic keys
@@ -78,23 +78,80 @@ const initialCapacities: MonthCapacity[] = Array.from({ length: 12 }, (_, i) => 
 }));
 
 // The slice of state that gets persisted (locally or to a shared plan)
-export type PlanData = Pick<AppState, 'projects' | 'monthCapacities' | 'activePalette'>;
+export interface PlanData {
+  years: Record<string, YearPlan>;
+  activePalette: PaletteName;
+}
 
 export const getPlanData = (state: AppState): PlanData => ({
-  projects: state.projects,
-  monthCapacities: state.monthCapacities,
+  years: {
+    ...state.otherYears,
+    [state.activeYear]: { projects: state.projects, monthCapacities: state.monthCapacities },
+  },
   activePalette: state.activePalette,
 });
 
+// Plans saved before multi-year support hold a single year at the top level.
+// They were all made while the timeline implicitly meant 2026.
+const LEGACY_PLAN_YEAR = 2026;
+
+const normalizeYearPlan = (plan: Partial<YearPlan> | undefined): YearPlan => ({
+  projects: Array.isArray(plan?.projects) ? plan.projects : [],
+  monthCapacities: plan?.monthCapacities?.length === 12 ? plan.monthCapacities : initialCapacities,
+});
+
+/** Accepts current and legacy plan formats (from localStorage or a shared plan). */
+export const normalizePlanData = (raw: unknown): PlanData => {
+  const data = (raw ?? {}) as Partial<PlanData> & Partial<YearPlan>;
+  const source =
+    data.years && typeof data.years === 'object'
+      ? data.years
+      : { [LEGACY_PLAN_YEAR]: { projects: data.projects, monthCapacities: data.monthCapacities } };
+  const years = Object.fromEntries(
+    Object.entries(source)
+      .filter(([year]) => /^\d{4}$/.test(year))
+      .map(([year, plan]) => [year, normalizeYearPlan(plan)])
+  );
+  const palette = data.activePalette && PALETTE_NAMES.includes(data.activePalette) ? data.activePalette : 'forest';
+  return { years, activePalette: palette };
+};
+
+const sortedYears = (years: Iterable<string | number>) => [...new Set([...years].map(Number))].sort((a, b) => a - b);
+
+// The viewed year is a per-browser preference, never part of the (possibly shared) plan
+const YEAR_KEY = 'gram-year';
+
+const getStoredYear = (): number | null => {
+  const year = parseInt(localStorage.getItem(YEAR_KEY) ?? '', 10);
+  return isNaN(year) ? null : year;
+};
+
+const storeYear = (year: number) => localStorage.setItem(YEAR_KEY, String(year));
+
+// Keeps `preferred` if the plan has it; otherwise the current year, otherwise the latest one
+const pickYear = (years: number[], preferred: number | null): number => {
+  if (preferred !== null && years.includes(preferred)) return preferred;
+  const currentYear = new Date().getFullYear();
+  if (years.length === 0 || years.includes(currentYear)) return currentYear;
+  return years[years.length - 1];
+};
+
+// Store state that shows `year` out of a full set of years (the year may not exist yet)
+const showYear = (years: Record<string, YearPlan>, year: number) => {
+  const { [year]: active, ...otherYears } = years;
+  return { activeYear: year, ...normalizeYearPlan(active), otherYears };
+};
+
+// Turns plan data into store state, showing `preferredYear` when the plan has it
+const unpackPlanData = (data: PlanData, preferredYear: number | null) => ({
+  ...showYear(data.years, pickYear(sortedYears(Object.keys(data.years)), preferredYear)),
+  activePalette: data.activePalette,
+});
+
 export const applyPlanData = (data: PlanData) => {
-  const palette = PALETTE_NAMES.includes(data.activePalette) ? data.activePalette : 'forest';
-  const capacities = data.monthCapacities?.length === 12 ? data.monthCapacities : initialCapacities;
-  setActivePalette(palette);
-  useStore.setState({
-    projects: Array.isArray(data.projects) ? data.projects : [],
-    monthCapacities: capacities,
-    activePalette: palette,
-  });
+  const normalized = normalizePlanData(data);
+  setActivePalette(normalized.activePalette);
+  useStore.setState(unpackPlanData(normalized, useStore.getState().activeYear));
 };
 
 // When the page is bound to a shared plan, the server is the source of truth:
@@ -110,8 +167,10 @@ const localPlanStorage: StateStorage = {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
+      activeYear: getStoredYear() ?? new Date().getFullYear(),
       projects: [],
       monthCapacities: initialCapacities,
+      otherYears: {},
       activePalette: 'forest' as PaletteName,
 
       cyclePalette: () => {
@@ -121,6 +180,39 @@ export const useStore = create<AppState>()(
         const next = PALETTE_NAMES[nextIndex];
         setActivePalette(next);
         set({ activePalette: next });
+      },
+
+      switchYear: (year: number) => {
+        const state = get();
+        if (year === state.activeYear) return;
+        storeYear(year);
+        set(showYear(getPlanData(state).years, year));
+      },
+
+      addYear: () => {
+        const { years } = getPlanData(get());
+        const latest = Math.max(...Object.keys(years).map(Number));
+        const year = latest + 1;
+        storeYear(year);
+        // A new year starts empty, with the same capacities as the latest one
+        const monthCapacities = years[latest].monthCapacities.map((mc) => ({ ...mc }));
+        set(showYear({ ...years, [year]: { projects: [], monthCapacities } }, year));
+      },
+
+      removeYear: (year: number) => {
+        const state = get();
+        const years = { ...getPlanData(state).years };
+        delete years[year];
+        const remaining = sortedYears(Object.keys(years));
+        if (remaining.length === 0) return;
+
+        // Removing the viewed year shows the closest remaining one instead
+        const next =
+          year === state.activeYear
+            ? remaining.reduce((best, y) => (Math.abs(y - year) < Math.abs(best - year) ? y : best))
+            : state.activeYear;
+        storeYear(next);
+        set(showYear(years, next));
       },
 
       addProject: (name: string) => {
@@ -251,6 +343,8 @@ export const useStore = create<AppState>()(
         }));
       },
 
+      getYears: () => sortedYears([...Object.keys(get().otherYears), get().activeYear]),
+
       getTotalCapacity: () => {
         return get().monthCapacities.reduce((sum, mc) => sum + mc.capacity, 0);
       },
@@ -345,9 +439,11 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'gram-storage',
-      version: 1,
+      version: 2, // v2: plan split by year
       storage: createJSONStorage(() => localPlanStorage),
       partialize: getPlanData,
+      migrate: (persisted) => normalizePlanData(persisted),
+      merge: (persisted, current) => ({ ...current, ...unpackPlanData(normalizePlanData(persisted), getStoredYear()) }),
       // In shared mode the plan is loaded from the server instead
       skipHydration: isSharedMode(),
       onRehydrateStorage: () => (state) => {

@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useStore, PALETTES, getActivePalette } from '../store/useStore';
 import { useSharedPlan, startSharing, copyShareLink } from '../store/sharedPlan';
 import type { SyncStatus } from '../store/sharedPlan';
@@ -59,6 +60,54 @@ function ShareControls() {
   );
 }
 
+function YearSwitcher() {
+  const years = useStore(useShallow((s) => s.getYears()));
+  const activeYear = useStore((s) => s.activeYear);
+  const switchYear = useStore((s) => s.switchYear);
+  const addYear = useStore((s) => s.addYear);
+  const removeYear = useStore((s) => s.removeYear);
+  const nextYear = years[years.length - 1] + 1;
+
+  return (
+    <div className="flex items-center p-0.5 ml-2 rounded-lg bg-white/10">
+      {years.map((year) => (
+        <div key={year} className="relative group">
+          <button
+            onClick={() => switchYear(year)}
+            className={`px-2.5 py-1 rounded-md text-xs font-semibold tabular-nums transition-all ${
+              year === activeYear ? 'bg-white text-gray-900 shadow-sm' : 'text-white/60 hover:text-white'
+            }`}
+          >
+            {year}
+          </button>
+          {years.length > 1 && (
+            <button
+              onClick={() => {
+                if (confirm(`Delete ${year} with all its projects and capacity? This can't be undone.`)) {
+                  removeYear(year);
+                }
+              }}
+              title={`Delete ${year}`}
+              className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gray-700 hover:bg-red-500 text-white text-[10px] leading-none ring-1 ring-white/20 items-center justify-center hidden group-hover:flex"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      ))}
+      <button
+        onClick={addYear}
+        title={`Add ${nextYear} (starts with the same capacity as ${nextYear - 1})`}
+        className="w-6 h-6 ml-0.5 rounded-md text-white/60 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 interface HeaderProps {
   layoutMode: 'side' | 'bottom';
   onLayoutToggle: () => void;
@@ -78,6 +127,7 @@ export function Header({ layoutMode, onLayoutToggle }: HeaderProps) {
             </svg>
           </div>
           <h1 className="text-base font-semibold text-white tracking-tight">Gram</h1>
+          <YearSwitcher />
         </div>
 
         <div className="flex items-center gap-2">

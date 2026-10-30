@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { useStore, getPlanData, applyPlanData } from './useStore';
 import { getSharedPlanId, setSharedPlanId, getSharedPlanUrl } from './sharedMode';
 import { fetchPlan, savePlan, newPlanId, PlanNotFoundError } from '../lib/planApi';
+import type { AppState } from '../types';
 
 export type SyncStatus = 'local' | 'loading' | 'saving' | 'saved' | 'error';
 
@@ -98,6 +99,22 @@ async function pullRemote() {
   }
 }
 
+// Read from the snapshot itself: the store's getters always see the latest state
+const yearsOf = (state: AppState) => Object.keys(getPlanData(state).years).sort().join();
+
+function planChanged(state: AppState, prev: AppState): boolean {
+  if (state.activeYear !== prev.activeYear) {
+    // Switching the viewed year only moves data between fields; adding or removing a year changes the plan
+    return yearsOf(state) !== yearsOf(prev);
+  }
+  return (
+    state.projects !== prev.projects ||
+    state.monthCapacities !== prev.monthCapacities ||
+    state.otherYears !== prev.otherYears ||
+    state.activePalette !== prev.activePalette
+  );
+}
+
 /** Wires autosave + polling. Safe to call once the store holds the plan's current data. */
 function startSync() {
   if (started) return;
@@ -105,14 +122,7 @@ function startSync() {
 
   useStore.subscribe((state, prev) => {
     if (applyingRemote) return;
-    if (
-      state.projects === prev.projects &&
-      state.monthCapacities === prev.monthCapacities &&
-      state.activePalette === prev.activePalette
-    ) {
-      return;
-    }
-    scheduleSave();
+    if (planChanged(state, prev)) scheduleSave();
   });
 
   setInterval(() => {

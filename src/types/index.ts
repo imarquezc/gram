@@ -20,13 +20,25 @@ export interface MonthCapacity {
   capacity: number; // dev-months available (number of rows)
 }
 
-export interface AppState {
+// Everything that belongs to one calendar year of the plan
+export interface YearPlan {
   projects: Project[];
   monthCapacities: MonthCapacity[];
+}
+
+export interface AppState {
+  // The year being viewed; its data lives unpacked in projects/monthCapacities
+  activeYear: number;
+  projects: Project[];
+  monthCapacities: MonthCapacity[];
+  otherYears: Record<string, YearPlan>; // Every year except activeYear, keyed by year
   activePalette: 'forest' | 'ocean' | 'sunset';
 
   // Actions
   cyclePalette: () => void;
+  switchYear: (year: number) => void;
+  addYear: () => void; // Adds the year after the latest one, with its capacities
+  removeYear: (year: number) => void;
   addProject: (name: string) => void;
   removeProject: (projectId: string) => void;
   updateProjectName: (projectId: string, name: string) => void;
@@ -43,6 +55,7 @@ export interface AppState {
   updateMonthCapacity: (month: number, capacity: number) => void;
 
   // Computed
+  getYears: () => number[];
   getTotalCapacity: () => number;
   getTotalAllocated: () => number;
   getTotalWork: () => number;
